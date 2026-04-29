@@ -1,0 +1,3949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#F5F0E8;--ink:#1A1612;--gold:#C8A84B;--red:#C0392B;--green:#2E7D52;--muted:#7A7268;--surface:#FDFBF7;--border:rgba(26,22,18,0.12);--border-solid:#E0DDD8;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--ink);overflow:hidden;}
+#app{width:100%;height:100vh;position:relative;display:flex;align-items:center;justify-content:center;}
+.screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity .55s ease,transform .55s ease;}
+.screen.hidden{opacity:0;pointer-events:none;transform:translateY(16px);}
+.bg-grid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(26,22,18,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(26,22,18,.04) 1px,transparent 1px);background-size:40px 40px;}
+.bg-c{position:absolute;border-radius:50%;pointer-events:none;}
+.bg-c1{width:580px;height:580px;top:-170px;right:-110px;border:1px solid rgba(200,168,75,.18);}
+.bg-c2{width:400px;height:400px;top:-80px;right:-20px;border:1px solid rgba(200,168,75,.12);}
+.bg-c3{width:680px;height:680px;bottom:-230px;left:-180px;border:1px solid rgba(26,22,18,.05);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.dot-pulse{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s ease-in-out infinite;}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border:1px solid var(--gold);border-radius:2px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 32px;border:none;border-radius:2px;cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;transition:transform .12s ease,background .18s ease;}
+.btn:hover{transform:translateY(-2px);}
+.btn:active{transform:scale(.97);}
+.btn-dark{background:var(--ink);color:var(--cream);}
+.btn-dark:hover{background:var(--gold);color:var(--ink);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:#236040;}
+.btn:disabled{opacity:.38;cursor:not-allowed;transform:none!important;}
+.btn-ghost{padding:10px 20px;border:1px solid var(--border-solid);border-radius:2px;background:transparent;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);transition:all .15s ease;}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+.hidden{display:none!important;}
+#screen-start{flex-direction:column;overflow:hidden;}
+.start-content{position:relative;z-index:1;text-align:center;padding:2rem;max-width:640px;width:100%;}
+.start-title{font-family:'Playfair Display',serif;font-size:clamp(46px,7.5vw,68px);font-weight:900;line-height:1;letter-spacing:-.02em;color:var(--ink);margin-bottom:.4rem;animation:fadeUp .6s ease .1s both;}
+.start-title em{font-style:italic;color:var(--gold);}
+.start-sub{font-family:'Playfair Display',serif;font-size:clamp(13px,2.2vw,17px);color:var(--muted);margin-bottom:1.3rem;animation:fadeUp .6s ease .2s both;}
+.mode-section{animation:fadeUp .6s ease .22s both;margin-bottom:1.1rem;}
+.mode-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+.mode-tabs{display:flex;gap:8px;justify-content:center;}
+.mode-tab{padding:9px 20px;border-radius:2px;cursor:pointer;border:1px solid var(--border-solid);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase;background:var(--surface);color:var(--muted);transition:all .15s ease;}
+.mode-tab:hover{border-color:var(--gold);color:var(--gold);}
+.mode-tab.active{background:var(--ink);color:var(--cream);border-color:var(--ink);}
+.game-select-grid{display:flex;flex-direction:column;gap:5px;max-width:460px;margin:0 auto 1.1rem;}
+.game-select-row{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:3px;border:1px solid var(--border-solid);background:var(--surface);cursor:pointer;transition:all .15s ease;}
+.game-select-row:hover{border-color:var(--gold);}
+.game-select-row.selected{border-color:var(--ink);background:var(--ink);}
+.game-select-row.selected .gs-name{color:var(--cream);}
+.game-select-row.selected .gs-cat{color:rgba(245,240,232,.45);}
+.gs-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.gs-name{flex:1;font-size:13px;color:var(--ink);font-weight:500;text-align:left;}
+.gs-cat{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.gs-dot.risky{background:var(--red);}
+.gs-dot.theory{background:#1A5F8A;}
+.gs-dot.probability{background:#6B3FA0;}
+.pool-preview{background:var(--ink);border-radius:4px;padding:12px 16px;margin-bottom:1.1rem;animation:fadeUp .6s ease .27s both;}
+.pool-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.pool-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);}
+.pool-count{font-family:'DM Mono',monospace;font-size:11px;color:rgba(245,240,232,.4);}
+.pool-games{display:flex;flex-wrap:wrap;gap:5px;}
+.pool-game-tag{font-family:'DM Mono',monospace;font-size:10px;padding:3px 8px;border-radius:2px;border:1px solid rgba(245,240,232,.13);color:rgba(245,240,232,.65);}
+.pool-game-tag.risky{border-color:rgba(192,57,43,.4);color:#E8806A;}
+.pool-game-tag.theory{border-color:rgba(26,95,138,.4);color:#7BAFD4;}
+.pool-game-tag.prob{border-color:rgba(107,63,160,.4);color:#B89DDD;}
+.options-row{display:flex;gap:20px;justify-content:center;align-items:center;margin-bottom:1.1rem;animation:fadeUp .6s ease .32s both;}
+.toggle-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
+.toggle-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;}
+.toggle{width:36px;height:20px;border-radius:10px;background:var(--border-solid);position:relative;transition:background .2s ease;flex-shrink:0;}
+.toggle.on{background:var(--ink);}
+.toggle-knob{width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:transform .2s ease;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle.on .toggle-knob{transform:translateX(16px);}
+.play-btn-wrap{animation:fadeUp .6s ease .38s both;}
+.play-arrow{font-size:16px;transition:transform .18s ease;}
+.btn-dark:hover .play-arrow{transform:translateX(5px);}
+#screen-game{flex-direction:column;overflow:hidden;}
+.game-layout{width:100%;height:100vh;display:flex;flex-direction:column;}
+.game-header{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.header-logo{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--ink);}
+.header-logo em{color:var(--gold);font-style:italic;}
+.header-center{display:flex;flex-direction:column;align-items:center;}
+.header-game-tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;}
+.header-game-name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--ink);}
+.header-right{display:flex;align-items:center;gap:10px;}
+.exit-btn{padding:6px 12px;border-radius:2px;border:1px solid var(--border-solid);background:transparent;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);transition:all .15s ease;}
+.exit-btn:hover{border-color:var(--red);color:var(--red);}
+.hints-chip{font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;border-radius:2px;border:1px solid var(--border-solid);color:var(--muted);}
+.hints-chip.on{border-color:rgba(200,168,75,.4);color:var(--gold);background:rgba(200,168,75,.08);}
+.balance-pill{display:flex;align-items:center;gap:8px;padding:7px 14px;background:var(--ink);border-radius:2px;}
+.balance-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(245,240,232,.55);}
+.balance-amount{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--cream);transition:color .35s ease;min-width:70px;text-align:right;}
+.balance-amount.gain{color:#6EC994;}
+.balance-amount.loss{color:#E8806A;}
+.progress-row{display:flex;align-items:center;gap:8px;padding:9px 24px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.prog-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.prog-dots{display:flex;gap:6px;}
+.prog-dot{width:8px;height:8px;border-radius:50%;background:var(--border-solid);transition:all .3s ease;}
+.prog-dot.done{background:var(--green);}
+.prog-dot.current{background:var(--gold);transform:scale(1.3);}
+#game-mount{flex:1;overflow:hidden;position:relative;}
+.game-intro-overlay{position:absolute;inset:0;z-index:20;background:rgba(245,240,232,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
+.intro-badge{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold);padding:5px 14px;border-radius:2px;margin-bottom:1.4rem;}
+.intro-title{font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:var(--ink);margin-bottom:.65rem;}
+.intro-desc{font-size:14px;color:var(--muted);line-height:1.75;max-width:380px;margin-bottom:1.8rem;}
+.intro-rules{display:flex;flex-direction:column;gap:10px;max-width:350px;margin-bottom:1.8rem;text-align:left;}
+.rule-item{display:flex;align-items:flex-start;gap:12px;font-size:13px;color:var(--ink);line-height:1.6;}
+.rule-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold);min-width:20px;margin-top:1px;flex-shrink:0;}
+#screen-results{flex-direction:column;overflow-y:auto;}
+.results-content{text-align:center;padding:2rem;max-width:600px;width:100%;animation:fadeUp .5s ease both;}
+.results-title{font-family:'Playfair Display',serif;font-size:40px;font-weight:900;color:var(--ink);line-height:1.05;margin-bottom:.4rem;}
+.results-profile{font-family:'Playfair Display',serif;font-size:18px;font-style:italic;color:var(--gold);margin-bottom:1.4rem;}
+.session-summary{background:var(--ink);border-radius:4px;padding:12px 16px;margin-bottom:1.2rem;text-align:left;}
+.session-summary-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+.session-game-rows{display:flex;flex-direction:column;gap:4px;}
+.session-game-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);}
+.session-game-row:last-child{border-bottom:none;}
+.session-game-name{font-size:12px;color:rgba(245,240,232,.8);}
+.session-game-cat{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:2px;}
+.session-game-cat.risky{background:rgba(192,57,43,.2);color:#E8806A;}
+.session-game-cat.theory{background:rgba(26,95,138,.2);color:#7BAFD4;}
+.session-game-earn{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;}
+.session-game-earn.pos{color:#6EC994;}
+.session-game-earn.neg{color:#E8806A;}
+.session-game-earn.zero{color:rgba(245,240,232,.4);}
+.results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:1.2rem;}
+.res-cell{background:var(--surface);padding:14px 8px;text-align:center;}
+.res-cell-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--ink);margin-bottom:4px;}
+.res-cell-label{font-size:11px;color:var(--muted);letter-spacing:.04em;}
+.result-analysis{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:14px 18px;text-align:left;margin-bottom:1.2rem;}
+.analysis-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.analysis-text{font-size:13px;color:var(--ink);line-height:1.75;}
+.results-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+
+/* ── LEADERBOARD SCREEN ── */
+#screen-leaderboard{flex-direction:column;overflow-y:auto;}
+.lb-content{text-align:center;padding:2rem;max-width:560px;width:100%;animation:fadeUp .5s ease both;}
+.lb-title{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;color:var(--ink);margin-bottom:.3rem;}
+.lb-sub{font-size:14px;color:var(--muted);margin-bottom:1.4rem;}
+.lb-balance-big{font-family:'DM Mono',monospace;font-size:42px;font-weight:500;color:var(--ink);margin-bottom:.3rem;}
+.lb-percentile{font-size:14px;color:var(--muted);margin-bottom:6px;}
+.lb-percentile strong{color:var(--ink);}
+.lb-pct-bar-wrap{background:var(--border-solid);border-radius:3px;height:6px;overflow:hidden;max-width:360px;margin:0 auto 1.4rem;}
+.lb-pct-bar{height:100%;border-radius:3px;background:var(--green);transition:width .8s ease;}
+.lb-name-section{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px 18px;margin-bottom:1.2rem;text-align:left;}
+.lb-name-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.lb-name-inputs{display:flex;gap:10px;align-items:center;}
+.lb-name-first{flex:1.6;padding:9px 12px;border:1px solid var(--border-solid);border-radius:3px;font-size:14px;background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;}
+.lb-name-last{flex:.8;padding:9px 12px;border:1px solid var(--border-solid);border-radius:3px;font-size:14px;background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;}
+.lb-name-first:focus,.lb-name-last:focus{outline:none;border-color:var(--gold);}
+.lb-submit-btn{white-space:nowrap;}
+.lb-submit-status{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:6px;min-height:16px;}
+.lb-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:1.2rem;text-align:left;}
+.lb-table-header{display:grid;grid-template-columns:36px 1fr 80px 70px;gap:8px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+.lb-row{display:grid;grid-template-columns:36px 1fr 80px 70px;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);align-items:center;transition:background .1s ease;}
+.lb-row:last-child{border-bottom:none;}
+.lb-row:hover{background:rgba(200,168,75,.04);}
+.lb-row.lb-you{background:rgba(26,22,18,.04);border-left:3px solid var(--gold);}
+.lb-rank{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}
+.lb-rank.top{color:var(--gold);font-weight:500;}
+.lb-name-cell{font-size:13px;color:var(--ink);}
+.lb-you-tag{font-family:'DM Mono',monospace;font-size:9px;padding:1px 6px;border-radius:2px;border:1px solid var(--border-solid);color:var(--muted);margin-left:6px;}
+.lb-bal{font-family:'DM Mono',monospace;font-size:12px;color:var(--green);text-align:right;}
+.lb-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:right;}
+.lb-total-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;padding:8px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- START SCREEN -->
+<div class="screen" id="screen-start">
+  <div class="bg-grid"></div><div class="bg-c bg-c1"></div><div class="bg-c bg-c2"></div><div class="bg-c bg-c3"></div>
+  <div class="start-content">
+    <div class="badge" style="margin-bottom:1.2rem;animation:fadeUp .6s ease both;"><div class="dot-pulse"></div>Decision Lab</div>
+    <div class="start-title">Decision<br><em>Lab</em></div>
+    <div class="start-sub">Game Theory Playtest</div>
+    <div class="mode-section">
+      <div class="mode-label">Play Mode</div>
+      <div class="mode-tabs">
+        <div class="mode-tab active" data-mode="session">&#x1F3B2; Full Session (5 games)</div>
+        <div class="mode-tab" data-mode="single">&#x1F3AF; Single Game</div>
+      </div>
+    </div>
+    <div id="session-panel">
+      <div class="pool-preview"><div class="pool-header"><div class="pool-tag">&#x25B6; Game Pool</div><div class="pool-count" id="pool-count-tag">&#x2014;</div></div><div class="pool-games" id="pool-games-list"></div></div>
+    </div>
+    <div id="single-panel" class="hidden">
+      <div style="margin-bottom:.6rem;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);">Select a game</div>
+      <div class="game-select-grid" id="game-select-grid"></div>
+    </div>
+    <div class="options-row">
+      <div class="toggle-wrap" id="hints-toggle-wrap">
+        <div class="toggle" id="hints-toggle"><div class="toggle-knob"></div></div>
+        <div class="toggle-label">Hints</div>
+      </div>
+    </div>
+    <div class="play-btn-wrap">
+      <button class="btn btn-dark" id="begin-btn">Begin <span class="play-arrow">&#x2192;</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen hidden" id="screen-game">
+  <div class="game-layout">
+    <div class="game-header">
+      <div class="header-logo">Decision <em>Lab</em></div>
+      <div class="header-center"><div class="header-game-tag" id="hdr-game-tag">&#x2014;</div><div class="header-game-name" id="hdr-game-name">&#x2014;</div></div>
+      <div class="header-right">
+        <button class="exit-btn" id="exit-btn">&#x2715; Exit</button>
+        <div class="hints-chip" id="hints-chip">Hints Off</div>
+        <div class="balance-pill"><span class="balance-label">Balance</span><span class="balance-amount" id="balance-display">$100.00</span></div>
+      </div>
+    </div>
+    <div class="progress-row" id="progress-row" style="display:none;">
+      <span class="prog-label">Session</span><div class="prog-dots" id="prog-dots"></div>
+    </div>
+    <div id="game-mount"></div>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN (brief — session mode auto-advances to leaderboard) -->
+<div class="screen hidden" id="screen-results">
+  <div class="bg-grid"></div>
+  <div class="results-content">
+    <div class="badge" style="margin-bottom:1.2rem;" id="results-badge">Complete</div>
+    <div class="results-title" id="results-title">Well Played</div>
+    <div class="results-profile" id="results-profile">&#x2014;</div>
+    <div class="session-summary" id="session-summary"><div class="session-summary-title">This Session</div><div class="session-game-rows" id="session-game-rows"></div></div>
+    <div class="results-grid" id="results-grid"></div>
+    <div class="result-analysis"><div class="analysis-title">Insight</div><div class="analysis-text" id="analysis-text">&#x2014;</div></div>
+    <div class="results-actions">
+      <button class="btn btn-dark" id="play-again-btn">Play Again &#x2192;</button>
+      <button class="btn-ghost" id="back-btn">&#x2190; Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEADERBOARD SCREEN (session mode only, after 5 games) -->
+<div class="screen hidden" id="screen-leaderboard">
+  <div class="bg-grid"></div>
+  <div class="lb-content">
+    <div class="badge" style="margin-bottom:1rem;">Session Complete</div>
+    <div class="lb-title">Your Result</div>
+    <div class="lb-balance-big" id="lb-balance-big">$100.00</div>
+    <div class="lb-percentile" id="lb-percentile">Loading...</div>
+    <div class="lb-pct-bar-wrap"><div class="lb-pct-bar" id="lb-pct-bar" style="width:50%"></div></div>
+
+    <div class="lb-name-section">
+      <div class="lb-name-label">Enter your name for the leaderboard</div>
+      <div class="lb-name-inputs">
+        <input type="text" class="lb-name-first" id="lb-first-name" placeholder="First name" maxlength="20"/>
+        <input type="text" class="lb-name-last"  id="lb-last-name"  placeholder="Last initial" maxlength="5"/>
+        <button class="btn btn-dark lb-submit-btn" id="lb-submit-btn">Submit &#x2192;</button>
+      </div>
+      <div class="lb-submit-status" id="lb-submit-status"></div>
+    </div>
+
+    <div class="lb-table-wrap">
+      <div class="lb-table-header"><span>#</span><span>Player</span><span style="text-align:right">Balance</span><span style="text-align:right">Date</span></div>
+      <div id="lb-rows"><div style="padding:16px;text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);">Loading leaderboard...</div></div>
+      <div class="lb-total-count" id="lb-total-count"></div>
+    </div>
+
+    <div class="results-actions">
+      <button class="btn btn-dark" id="lb-play-again-btn">Play Again &#x2192;</button>
+      <button class="btn-ghost" id="lb-back-btn">&#x2190; Menu</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- GAME REGISTRY -->
+<script>
+const GameRegistry=(()=>{
+  const _pool=[],MAX=5;
+  return {
+    register:function(g){if(!_pool.find(function(x){return x.id===g.id;}))_pool.push(g);},
+    getAll:function(){return _pool.slice();},
+    size:function(){return _pool.length;},
+    sessionSize:function(){return Math.min(_pool.length,MAX);},
+    getById:function(id){return _pool.find(function(g){return g.id===id;})||null;},
+    draw:function(n){const arr=_pool.slice();for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=arr[i];arr[i]=arr[j];arr[j]=t;}return arr.slice(0,Math.min(n,arr.length));},
+  };
+})();
+</script>
+
+<!-- DATA COLLECTOR -->
+<script>
+
+function generateUUID(){return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16);});}
+function r2(v){return Math.round(v*100)/100;}
+
+const DataCollector=(()=>{
+  let _sid,_results=[],_bal=100,_hints=false,_order=[],_running=100;
+  return {
+    startSession(hints){_sid=generateUUID();_results=[];_bal=100;_running=100;_hints=hints;_order=[];},
+    recordGame(game,winnings){
+      const idx=_results.length, start=_running, end=r2(_running+winnings);
+      _running=end; _order.push(game.id);
+      let params={};
+      if(typeof game.getSubmissionData==='function') try{params=game.getSubmissionData();}catch(e){console.warn('getSubmissionData failed',game.id,e);}
+      _results.push({result_id:_sid+'_'+game.id,session_id:_sid,game_type:game.id,game_index:idx,balance_at_start:start,winnings:r2(winnings),balance_at_end:end,game_params:params});
+    },
+    async submitSession(playerName,apiUrl){
+      if(!_results.length) return{ok:false,error:'No games'};
+      const payload={
+        session:{session_id:_sid,player_name:playerName.trim(),hints_enabled:_hints,games_played:_results.length,starting_balance:_bal,final_balance:_running,game_order:_order,timestamp_client:new Date().toISOString(),timezone_offset:new Date().getTimezoneOffset(),game_version:'1.0.0'},
+        game_results:_results
+      };
+      if(!apiUrl){console.log('[DataCollector] Dry-run payload:',JSON.stringify(payload,null,2));return{ok:true,dry:true,final_balance:_running};}
+      try{
+        const resp=await fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const data=await resp.json();
+        if(!resp.ok) return{ok:false,error:data.error,status:resp.status};
+        return{ok:true,...data};
+      }catch(e){return{ok:false,error:e.message};}
+    },
+    getFinalBalance(){return _running;},
+    getSessionId(){return _sid;},
+  };
+})();
+
+</script>
+
+<!-- PHASE SYSTEM -->
+<script>
+
+const PhaseSystem=(()=>{
+  const PHASE_URL=''; // set to API_LEADERBOARD base when live
+  const _cache={};
+  return {
+    async getOpponentData(gameType){
+      if(_cache[gameType]) return _cache[gameType];
+      if(!PHASE_URL) return null; // Phase 1: use academic baseline
+      try{
+        const resp=await fetch(PHASE_URL+'/opponent?game='+gameType);
+        if(!resp.ok) return null;
+        const data=await resp.json();
+        _cache[gameType]=data;
+        return data;
+      }catch(e){return null;}
+    }
+  };
+})();
+
+</script>
+
+<!-- GAME MODULE: BART -->
+<script>
+const GameBART = {
+  id:        'bart',
+  name:      'The Balloon Game',
+  shortName: 'BART',
+  category:  'risky',   // 'risky' | 'theory' | 'probability'
+
+  // ── intro overlay content ──────────────────────────────────
+  intro: {
+    title: 'The Balloon Game',
+    desc:  'Each pump earns you $0.05. But every balloon has a secret breaking point — pump too far and it pops, and you lose everything earned this round.',
+    rules: [
+      'Pump the balloon to earn $0.05 per pump',
+      'Cash out any time to bank your round earnings',
+      'If the balloon pops, you earn $0 for that round',
+      'Play 10 rounds — total earnings are added to your balance',
+    ]
+  },
+
+  // ── internal state (always reset in mount()) ───────────────
+  _state: null,
+  _shell: null,
+
+  // ── mount(container, shellAPI) ─────────────────────────────
+  // Renders the game into container. Called by shell after intro.
+  mount(container, shellAPI, hintsEnabled) {
+    this._shell = shellAPI;
+    this._state = {
+      round:         1,
+      totalRounds:   10,
+      pumps:         0,
+      roundEarnings: 0,
+      breakPoint:    0,
+      popCount:      0,
+      history:       [],    // { round, pumps, result:'pop'|'cash', earned }
+      active:        false,
+      animating:     false,
+    };
+
+    container.innerHTML = this._html();
+    this._bind();
+    this._newBreakPoint();
+    this._state.active = true;
+    this._updateUI();
+  },
+
+  // ── HTML template ──────────────────────────────────────────
+  _html() {
+    return `
+    <style>
+      #bart-root {
+        display:flex; height:100%; overflow:hidden;
+        font-family:'DM Sans',sans-serif;
+      }
+      .bart-left {
+        flex:1; display:flex; flex-direction:column;
+        align-items:center; justify-content:center;
+        padding:20px; gap:22px; position:relative;
+      }
+      .balloon-stage {
+        position:relative; width:280px; height:280px;
+        display:flex; align-items:flex-end; justify-content:center;
+      }
+      .balloon-wrap {
+        position:absolute; bottom:0;
+        display:flex; flex-direction:column; align-items:center;
+      }
+      #bart-balloon {
+        transition:transform .08s ease, opacity .2s ease;
+        filter:drop-shadow(0 8px 22px rgba(192,57,43,.2));
+        transform-origin:center bottom;
+      }
+      #bart-string {
+        width:2px; height:40px;
+        background:linear-gradient(to bottom,#888,#aaa);
+        border-radius:1px; transition:height .08s ease;
+      }
+      .bart-btns { display:flex; gap:14px; }
+      #bart-pump, #bart-cash { width:126px; height:50px; }
+
+      .bart-right {
+        width:262px; flex-shrink:0;
+        border-left:1px solid var(--border);
+        background:var(--surface);
+        display:flex; flex-direction:column; overflow:hidden;
+      }
+      .panel-sec  { padding:16px 18px; border-bottom:1px solid var(--border); }
+      .panel-lbl  {
+        font-family:'DM Mono',monospace; font-size:10px;
+        letter-spacing:.12em; text-transform:uppercase;
+        color:var(--muted); margin-bottom:9px;
+      }
+      .panel-big  { font-family:'DM Mono',monospace; font-size:32px; font-weight:500; color:var(--ink); }
+      .panel-big-green { color:var(--green); }
+      .panel-sub  { font-size:11px; color:var(--muted); margin-top:2px; }
+      .round-row  { display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; }
+      .round-of   { font-size:13px; color:var(--muted); }
+      .prog-bar   { height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+      .prog-fill  { height:100%; background:var(--gold); border-radius:2px; transition:width .4s ease; }
+      .risk-bg    { height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+      .risk-fill  { height:100%; border-radius:4px; transition:width .15s ease, background .3s ease; }
+      .risk-lbls  { display:flex; justify-content:space-between; font-size:10px; color:var(--muted); font-family:'DM Mono',monospace; margin-top:5px; }
+      .hist-list  { flex:1; overflow-y:auto; padding:8px 18px; }
+      .hist-item  {
+        display:flex; justify-content:space-between; align-items:center;
+        padding:7px 0; border-bottom:1px solid var(--border);
+        animation:fadeUp .25s ease;
+      }
+      .hist-rnd   { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); }
+      .hist-pumps { font-size:12px; }
+      .hist-res   { font-family:'DM Mono',monospace; font-size:11px; font-weight:500; padding:2px 7px; border-radius:2px; }
+      .hist-res.win { background:rgba(46,125,82,.12); color:var(--green); }
+      .hist-res.pop { background:rgba(192,57,43,.12); color:var(--red); }
+
+      #bart-explode {
+        position:absolute; inset:0; z-index:10;
+        display:flex; flex-direction:column;
+        align-items:center; justify-content:center; gap:10px;
+        background:rgba(245,240,232,.65);
+        opacity:0; pointer-events:none; transition:opacity .2s ease;
+      }
+      #bart-explode.show { opacity:1; }
+      .explode-emoji { font-size:72px; animation:popBurst .4s cubic-bezier(.36,.07,.19,.97); }
+      @keyframes popBurst {
+        0%   { transform:scale(.4); opacity:0; }
+        40%  { transform:scale(1.3); opacity:1; }
+        70%  { transform:scale(.9); }
+        100% { transform:scale(1); }
+      }
+      .explode-txt { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; color:var(--red); }
+      .explode-sub { font-size:12px; color:var(--muted); font-family:'DM Mono',monospace; }
+      .cash-flash  { position:absolute; inset:0; background:rgba(46,125,82,.07); opacity:0; pointer-events:none; transition:opacity .18s ease; }
+    </style>
+
+    <div id="bart-root">
+      <div class="bart-left">
+        <div class="cash-flash" id="bart-flash"></div>
+        <div class="balloon-stage">
+          <div class="balloon-wrap">
+            <svg id="bart-balloon" width="110" height="128" viewBox="0 0 110 128">
+              <defs>
+                <radialGradient id="bGrad" cx="37%" cy="33%" r="62%">
+                  <stop offset="0%" stop-color="#E8806A"/>
+                  <stop offset="100%" stop-color="#C0392B"/>
+                </radialGradient>
+              </defs>
+              <ellipse cx="55" cy="58" rx="44" ry="50" fill="url(#bGrad)"/>
+              <ellipse cx="41" cy="44" rx="13" ry="10" fill="rgba(255,255,255,0.24)"/>
+              <polygon points="50,106 60,106 55,118" fill="#A0302A"/>
+            </svg>
+            <div id="bart-string"></div>
+          </div>
+        </div>
+        <div class="bart-btns">
+          <button class="btn btn-dark"  id="bart-pump">▲ Pump</button>
+          <button class="btn btn-green" id="bart-cash" disabled>$ Cash Out</button>
+        </div>
+        <div id="bart-explode">
+          <div class="explode-emoji">💥</div>
+          <div class="explode-txt">POP!</div>
+          <div class="explode-sub" id="bart-explode-sub">Lost $0.00</div>
+        </div>
+      </div>
+
+      <div class="bart-right">
+        <div class="panel-sec">
+          <div class="panel-lbl">Round</div>
+          <div class="round-row">
+            <div class="panel-big" id="bart-round-num">1</div>
+            <div class="round-of">of 10</div>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" id="bart-prog" style="width:10%"></div></div>
+        </div>
+        <div class="panel-sec">
+          <div class="panel-lbl">At Risk This Round</div>
+          <div class="panel-big panel-big-green" id="bart-earn">$0.00</div>
+          <div class="panel-sub">lost if balloon pops</div>
+        </div>
+        <div class="panel-sec">
+          <div class="panel-lbl">Pumps This Round</div>
+          <div class="panel-big" id="bart-pumps">0</div>
+          <div class="panel-sub">× $0.05 per pump</div>
+        </div>
+        <div class="panel-sec">
+          <div class="panel-lbl">Risk Level</div>
+          <div class="risk-bg"><div class="risk-fill" id="bart-risk" style="width:0%"></div></div>
+          <div class="risk-lbls"><span>Safe</span><span>Danger</span></div>
+        </div>
+        <div class="panel-sec" style="padding-bottom:8px;">
+          <div class="panel-lbl">Round History</div>
+        </div>
+        <div class="hist-list" id="bart-hist"></div>
+      </div>
+    </div>`;
+  },
+
+  // ── event binding ──────────────────────────────────────────
+  _bind() {
+    document.getElementById('bart-pump').addEventListener('click', () => this._pump());
+    document.getElementById('bart-cash').addEventListener('click', () => this._cashOut());
+  },
+
+  // ── game logic ─────────────────────────────────────────────
+  _newBreakPoint() {
+    this._state.breakPoint = Math.floor(Math.random() * 64) + 1;
+  },
+
+  _updateUI() {
+    const s = this._state;
+    document.getElementById('bart-round-num').textContent = s.round;
+    document.getElementById('bart-prog').style.width = (s.round / s.totalRounds * 100) + '%';
+    document.getElementById('bart-pumps').textContent = s.pumps;
+    document.getElementById('bart-earn').textContent  = '$' + s.roundEarnings.toFixed(2);
+
+    const pct = Math.min((s.pumps / 40) * 100, 100);
+    const bar = document.getElementById('bart-risk');
+    bar.style.width = pct + '%';
+    bar.style.background = pct < 40 ? 'var(--green)' : pct < 70 ? 'var(--gold)' : 'var(--red)';
+
+    const scale = Math.min(1 + (s.pumps / 40) * 1.5, 2.8);
+    document.getElementById('bart-balloon').style.transform = `scale(${scale})`;
+    document.getElementById('bart-string').style.height = (40 + s.pumps * 1.3) + 'px';
+    document.getElementById('bart-cash').disabled = s.pumps === 0;
+  },
+
+  _pump() {
+    const s = this._state;
+    if (!s.active || s.animating) return;
+    s.pumps++;
+    s.roundEarnings = +(s.pumps * 0.05).toFixed(2);
+    if (s.pumps >= s.breakPoint) { this._triggerPop(); return; }
+    this._updateUI();
+  },
+
+  async _triggerPop() {
+    const s = this._state;
+    s.animating = true; s.active = false;
+    document.getElementById('bart-pump').disabled = true;
+    document.getElementById('bart-cash').disabled = true;
+
+    document.getElementById('bart-explode-sub').textContent = `Lost $${s.roundEarnings.toFixed(2)} this round`;
+    document.getElementById('bart-explode').classList.add('show');
+    document.getElementById('bart-balloon').style.opacity = '0';
+    document.getElementById('bart-string').style.opacity  = '0';
+
+    s.popCount++;
+    s.history.push({ round: s.round, pumps: s.pumps, result: 'pop', earned: 0, breakpoint: s.breakPoint });
+    this._addHistItem(s.round, s.pumps, 'pop', 0);
+
+    await this._delay(1700);
+    document.getElementById('bart-explode').classList.remove('show');
+    await this._delay(280);
+    this._nextRound();
+  },
+
+  async _cashOut() {
+    const s = this._state;
+    if (!s.active || s.pumps === 0 || s.animating) return;
+    s.animating = true; s.active = false;
+
+    const earned = s.roundEarnings;
+    s.history.push({ round: s.round, pumps: s.pumps, result: 'cash', earned, breakpoint: s.breakPoint });
+    this._addHistItem(s.round, s.pumps, 'cash', earned);
+
+    const flash = document.getElementById('bart-flash');
+    flash.style.opacity = '1';
+    await this._delay(180);
+    flash.style.opacity = '0';
+
+    this._shell.flashBalance(earned);
+    await this._delay(650);
+    this._nextRound();
+  },
+
+  _addHistItem(round, pumps, result, earned) {
+    const list = document.getElementById('bart-hist');
+    const el = document.createElement('div');
+    el.className = 'hist-item';
+    el.innerHTML = `
+      <span class="hist-rnd">R${round}</span>
+      <span class="hist-pumps">${pumps} pumps</span>
+      <span class="hist-res ${result === 'pop' ? 'pop' : 'win'}">
+        ${result === 'pop' ? '💥 POP' : '+$' + earned.toFixed(2)}
+      </span>`;
+    list.insertBefore(el, list.firstChild);
+  },
+
+  _nextRound() {
+    const s = this._state;
+    if (s.round >= s.totalRounds) {
+      this._shell.onGameComplete();
+      return;
+    }
+    s.round++;
+    s.pumps = 0; s.roundEarnings = 0;
+    s.animating = false; s.active = true;
+    this._newBreakPoint();
+
+    document.getElementById('bart-balloon').style.opacity   = '1';
+    document.getElementById('bart-balloon').style.transform = 'scale(1)';
+    document.getElementById('bart-string').style.opacity    = '1';
+    document.getElementById('bart-string').style.height     = '40px';
+    document.getElementById('bart-pump').disabled = false;
+    this._updateUI();
+  },
+
+  // ── getResults() — called by shell after game ends ─────────
+  getResults() {
+    const s = this._state;
+    const avgPumps   = Math.round(s.history.reduce((a, r) => a + r.pumps, 0) / s.history.length);
+    const popRate    = s.popCount / s.totalRounds;
+    const totalEarned = s.history.reduce((a, r) => a + r.earned, 0);
+
+    let title, profile, analysis;
+    if (popRate >= 0.7) {
+      title    = 'High Roller';
+      profile  = 'The Fearless Risk-Seeker';
+      analysis = `You popped ${s.popCount} of 10 balloons — a hallmark of risk-seeking behaviour. You systematically overweighted expected value relative to variance. The empirically optimal BART strategy averages 25–32 pumps per balloon.`;
+    } else if (popRate <= 0.2 && avgPumps < 15) {
+      title    = 'Playing It Safe';
+      profile  = 'The Loss-Averse Strategist';
+      analysis = `With only ${s.popCount} pops and ${avgPumps} pumps on average, you cashed out early and often. Loss aversion — weighting losses more heavily than equivalent gains — is at work here. You left expected earnings on the table.`;
+    } else {
+      title    = 'Well Calibrated';
+      profile  = 'The Rational Risk-Balancer';
+      analysis = `With ${s.popCount} pops and ${avgPumps} pumps per balloon on average, your behaviour tracks close to the theoretically optimal BART strategy. You intuitively balance expected value against variance.`;
+    }
+
+    return {
+      title,
+      profile,
+      analysis,
+      balanceDelta: totalEarned,
+      stats: [
+        { val: '$' + totalEarned.toFixed(2), label: 'BART Earnings' },
+        { val: String(s.popCount),            label: 'Balloons Popped' },
+        { val: String(avgPumps),              label: 'Avg. Pumps' },
+      ]
+    };
+  },
+
+  // ── destroy() — called by shell on unmount ─────────────────
+  getSubmissionData() {
+    const s = this._state;
+    const pumpsArr    = s.history.map(r => r.pumps);
+    const poppedArr   = s.history.map(r => r.result === 'pop');
+    const bpArr       = s.history.map(r => r.breakpoint);   // now always present
+    const earnedArr   = s.history.map(r => r.earned);
+    const totalPumps  = pumpsArr.reduce((a, b) => a + b, 0);
+    const avgPumps    = +(totalPumps / pumpsArr.length).toFixed(2);
+    const popRate     = +(s.popCount / s.totalRounds).toFixed(3);
+    const nonPopped   = s.history.filter(r => r.result !== 'pop');
+    const adjAvg      = nonPopped.length > 0
+      ? +(nonPopped.reduce((a, r) => a + r.pumps, 0) / nonPopped.length).toFixed(2) : 0;
+    const totalEarned = +s.history.reduce((a, r) => a + r.earned, 0).toFixed(2);
+    let riskProfile = 'calibrated';
+    if (popRate >= 0.7)                  riskProfile = 'risk_seeker';
+    if (popRate <= 0.2 && avgPumps < 15) riskProfile = 'loss_averse';
+    return {
+      // ── Game configuration (snapshot at time of play) ──────
+      config: {
+        total_rounds:       s.totalRounds,          // 10
+        earnings_per_pump:  0.05,                   // $0.05 per pump
+        breakpoint_min:     1,                      // uniform draw min
+        breakpoint_max:     64,                     // uniform draw max — key for A/B testing
+      },
+      // ── Payoff structure ────────────────────────────────────
+      payoffs: {
+        pop_payoff:         0,                      // always $0 on pop
+        cashout_payoff:     'pumps × $0.05',        // formula
+      },
+      // ── Per-round data ──────────────────────────────────────
+      rounds_played:       pumpsArr.length,
+      pumps_per_round:     pumpsArr,
+      result_per_round:    s.history.map(r => r.result),  // 'pop' | 'cash'
+      earned_per_round:    earnedArr,
+      breakpoint_per_round: bpArr,                 // the actual hidden breakpoint each round
+      // ── Summary stats ───────────────────────────────────────
+      avg_pumps:           avgPumps,
+      pop_rate:            popRate,
+      adjusted_avg_pumps:  adjAvg,                 // standard BART metric (non-popped only)
+      total_earnings:      totalEarned,
+      risk_profile:        riskProfile,
+    };
+  },
+
+  destroy() {
+    this._state = null;
+    this._shell = null;
+  },
+
+  _delay(ms) { return new Promise(r => setTimeout(r, ms)); },
+};
+
+// Register with the shell — this is the only line that touches global scope
+GameRegistry.register(GameBART);
+
+</script>
+
+<!-- GAME MODULE: CENTIPEDE -->
+<script>
+const GameCentipede = {
+  id:        'centipede',
+  name:      'The Centipede Game',
+  shortName: 'Centipede',
+  category:  'theory',
+
+  _ACADEMIC_A: -3.2,
+  _ACADEMIC_B: 0.28,
+
+  _academicTakeProb(node) {
+    return 1 / (1 + Math.exp(-(this._ACADEMIC_A + this._ACADEMIC_B * node)));
+  },
+
+  _CONFIG: {
+    capMin:        10,
+    capMax:        20,
+    startingPot:   2.00,
+    growthPerNode: 0.50,
+    // Loser share: drawn fresh each game via _drawLoserShare()
+  },
+
+  // ── 16 canonical 50-cent coin combinations ────────────────
+  // {q:quarters, d:dimes, n:nickels, p:pennies}
+  _COIN_COMBOS: [
+    {q:2,d:0,n:0,p:0},{q:1,d:2,n:1,p:0},{q:0,d:5,n:0,p:0},
+    {q:1,d:1,n:3,p:0},{q:0,d:4,n:2,p:0},{q:1,d:0,n:5,p:0},
+    {q:0,d:3,n:4,p:0},{q:0,d:2,n:6,p:0},{q:1,d:2,n:0,p:5},
+    {q:0,d:1,n:8,p:0},{q:1,d:1,n:2,p:5},{q:0,d:0,n:10,p:0},
+    {q:0,d:4,n:1,p:5},{q:1,d:0,n:4,p:5},{q:0,d:3,n:3,p:5},
+    {q:0,d:2,n:5,p:5},
+  ],
+
+  _state:    null,
+  _shell:    null,
+  _hintsEnabled: false,
+  _animId:   null,
+  _coins:    [],
+  _canvas:   null,
+  _ctx:      null,
+
+  intro: {
+    title: 'The Centipede Game',
+    desc:  'You and an opponent take turns. Pass to grow the pot, or Take to claim it. The longer you cooperate, the more you might earn — but your opponent might strike first.',
+    rules: [
+      'Pass to grow the pot, or Take to end the game',
+      'If you Take: you keep the larger share — split shown before play',
+      'If your opponent Takes: you receive the smaller share',
+      'A secret stopping node exists — if reached, the pot splits equally',
+      'Your starting position (Player 1 or 2) is randomised each game',
+    ]
+  },
+
+  mount(container, shellAPI, hintsEnabled) {
+    this._shell        = shellAPI;
+    this._hintsEnabled = !!hintsEnabled;
+    const cfg          = this._CONFIG;
+    const cap          = Math.floor(Math.random() * (cfg.capMax - cfg.capMin + 1)) + cfg.capMin;
+    const loserShare   = this._drawLoserShare();
+    const takerShare   = +(1 - loserShare).toFixed(2);
+    // Random first mover
+    const playerGoesFirst = Math.random() < 0.5;
+    const playerPosition  = playerGoesFirst ? 1 : 2;
+
+    // Pick coin combo for this game
+    this._state = {
+      node:           1,
+      cap,
+      pot:            cfg.startingPot,
+      loserShare,
+      takerShare,
+      playerGoesFirst,
+      playerPosition,
+      playerTurn:     playerGoesFirst,
+      gameOver:       false,
+      outcome:        null,
+      earnings:       0,
+      history:        [],
+      animating:      false,
+    };
+
+    this._coins  = [];
+    container.innerHTML = this._html();
+    this._setupCanvas();
+    this._bindEvents();
+    this._startPhysics();
+    this._updateUI();
+
+    // If opponent goes first, trigger their turn after short delay
+    if (!playerGoesFirst) {
+      setTimeout(() => this._opponentTurn(), 900);
+    }
+  },
+
+  _drawLoserShare() {
+    const mean = 0.25, sd = 0.10;
+    let sample;
+    do {
+      const u1 = Math.random(), u2 = Math.random();
+      const z  = Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2);
+      sample = mean + sd * z;
+    } while (sample < 0 || sample >= 0.50);
+    return Math.round(sample * 100) / 100;
+  },
+
+  // ── HTML ──────────────────────────────────────────────────
+  _html() {
+    return `<style>
+      #cent-root{display:flex;height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;}
+      .cent-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px 20px;gap:18px;position:relative;background:var(--cream);}
+
+      /* ── Pot ── */
+      .cent-pot-area{text-align:center;}
+      .cent-pot-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+      .cent-pot-val{font-family:'Playfair Display',serif;font-size:clamp(40px,5.5vw,58px);font-weight:900;line-height:1;color:var(--ink);transition:transform .15s ease;}
+      .cent-pot-val.grow{animation:potGrow .3s ease;}
+      @keyframes potGrow{0%{transform:scale(1);}50%{transform:scale(1.08);color:var(--green);}100%{transform:scale(1);}}
+      .cent-pot-sub{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:5px;}
+
+      /* ── Payoffs ── */
+      .cent-payoffs{display:flex;gap:14px;align-items:center;}
+      .cent-payoff-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:10px 16px;text-align:center;min-width:122px;transition:all .2s ease;}
+      .cent-payoff-card.take-card{border-color:var(--red);}
+      .cent-payoff-card.pass-card{border-color:var(--green);}
+      .cent-payoff-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+      .cent-payoff-you{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;color:var(--ink);margin-bottom:2px;}
+      .cent-payoff-opp{font-size:11px;color:var(--muted);}
+      .cent-payoff-arrow{font-size:18px;color:var(--muted);}
+
+      /* ── Buttons ── */
+      .cent-actions{display:flex;gap:12px;}
+      #cent-take{min-width:132px;height:50px;}
+      #cent-pass{min-width:132px;height:50px;}
+
+      /* ── Position badge ── */
+      .cent-position-badge{font-family:'DM Mono',monospace;font-size:11px;padding:5px 12px;border-radius:2px;border:1px solid var(--border-solid);color:var(--muted);text-align:center;}
+      .cent-position-badge.p1{border-color:rgba(200,168,75,.4);color:#8a6000;background:rgba(200,168,75,.08);}
+      .cent-position-badge.p2{border-color:rgba(26,95,138,.4);color:#1A5F8A;background:rgba(26,95,138,.06);}
+
+      .cent-status{font-size:13px;color:var(--muted);text-align:center;height:18px;font-family:'DM Mono',monospace;letter-spacing:.04em;}
+      .cent-status.opponent{color:var(--gold);}
+
+      /* ── COIN JAR ── */
+      .coin-jar-section{display:flex;flex-direction:column;align-items:center;gap:4px;}
+      .coin-jar-wrap{position:relative;}
+      .coin-jar-canvas-wrap{
+        position:relative;
+        border:3px solid #8B7355;
+        border-top:none;
+        border-radius:0 0 20px 20px;
+        background:linear-gradient(180deg,rgba(255,248,220,.95) 0%,rgba(255,235,180,.95) 100%);
+        overflow:hidden;
+        box-shadow:inset 0 -3px 10px rgba(139,115,85,.2),0 3px 12px rgba(139,115,85,.25);
+      }
+      .coin-jar-rim{
+        height:12px;
+        background:linear-gradient(180deg,#A0896A 0%,#8B7355 100%);
+        border-radius:6px 6px 0 0;
+        border:2px solid #6B5340;
+        margin-bottom:0;
+        box-shadow:0 2px 4px rgba(0,0,0,.2);
+      }
+      #coin-canvas{display:block;}
+      .coin-jar-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;letter-spacing:.08em;}
+      .coin-combo-tag{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-align:center;letter-spacing:.06em;margin-top:2px;}
+
+      /* ── Outcome overlay ── */
+      #cent-outcome{position:absolute;inset:0;z-index:20;background:rgba(245,240,232,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;opacity:0;pointer-events:none;transition:opacity .35s ease;text-align:center;padding:2rem;}
+      #cent-outcome.show{opacity:1;pointer-events:auto;}
+      .cent-out-emoji{font-size:52px;}
+      .cent-out-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:var(--ink);}
+      .cent-out-sub{font-size:13px;color:var(--muted);max-width:360px;line-height:1.65;}
+      .cent-out-earn{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;padding:8px 20px;border-radius:4px;}
+      .cent-out-earn.win{color:var(--green);background:rgba(46,125,82,.1);border:1px solid rgba(46,125,82,.2);}
+      .cent-out-earn.lose{color:var(--muted);background:rgba(26,22,18,.05);border:1px solid var(--border-solid);}
+      .cent-out-cap{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;border:1px solid var(--border-solid);padding:5px 14px;border-radius:2px;}
+      .thinking-dots span{animation:blink 1.2s ease-in-out infinite;opacity:0;}
+      .thinking-dots span:nth-child(2){animation-delay:.2s;}
+      .thinking-dots span:nth-child(3){animation-delay:.4s;}
+      @keyframes blink{0%,80%,100%{opacity:0;}40%{opacity:1;}}
+
+      /* ── Right panel ── */
+      .cent-right{width:252px;flex-shrink:0;border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;}
+      .cent-panel-sec{padding:13px 15px;border-bottom:1px solid var(--border);}
+      .cent-panel-lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+      .cent-stat-big{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;color:var(--ink);}
+      .cent-stat-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+      .cent-hist-list{flex:1;overflow-y:auto;padding:8px 15px;}
+      .cent-hist-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);animation:fadeUp .2s ease;}
+      .cent-hist-node{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);min-width:32px;}
+      .cent-hist-actor{font-size:12px;color:var(--ink);}
+      .cent-hist-action{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:2px 7px;border-radius:2px;}
+      .cent-hist-action.pass{background:rgba(46,125,82,.12);color:var(--green);}
+      .cent-hist-action.take{background:rgba(192,57,43,.12);color:var(--red);}
+    </style>
+
+    <div id="cent-root">
+      <div class="cent-main">
+
+        <div class="cent-pot-area">
+          <div class="cent-pot-label">Current Pot</div>
+          <div class="cent-pot-val" id="cent-pot">$2.00</div>
+          <div class="cent-pot-sub" id="cent-node-label">Node 1</div>
+        </div>
+
+        <div class="cent-payoffs" id="cent-payoffs">
+          <div class="cent-payoff-card take-card">
+            <div class="cent-payoff-title">If You Take</div>
+            <div class="cent-payoff-you" id="cent-take-you">+$1.30</div>
+            <div class="cent-payoff-opp" id="cent-take-opp">Opponent gets $0.70</div>
+          </div>
+          <div class="cent-payoff-arrow">→</div>
+          <div class="cent-payoff-card pass-card">
+            <div class="cent-payoff-title">If You Pass</div>
+            <div class="cent-payoff-you" id="cent-pass-you">Pot grows to $2.50</div>
+            <div class="cent-payoff-opp" id="cent-pass-opp">Opponent decides next</div>
+          </div>
+        </div>
+
+        <div class="cent-actions">
+          <button class="btn btn-red"   id="cent-take" disabled>&#x2715; Take</button>
+          <button class="btn btn-green" id="cent-pass" disabled>&#x2192; Pass</button>
+        </div>
+
+        <div class="cent-position-badge" id="cent-pos-badge">Player 1 (moves first)</div>
+        <div class="cent-status" id="cent-status">Ready</div>
+
+        <!-- Coin jar -->
+        <div class="coin-jar-section">
+          <div class="coin-jar-rim" id="coin-jar-rim" style="width:320px;"></div>
+          <div class="coin-jar-canvas-wrap" id="coin-jar-wrap">
+            <canvas id="coin-canvas"></canvas>
+          </div>
+          <div class="coin-jar-label" id="coin-jar-label">Pot: $0.00</div>
+          <div class="coin-combo-tag" id="coin-combo-tag">—</div>
+        </div>
+
+        <div id="cent-outcome">
+          <div class="cent-out-emoji" id="cent-out-emoji">&#x1F91D;</div>
+          <div class="cent-out-title" id="cent-out-title">Game Over</div>
+          <div class="cent-out-sub"   id="cent-out-sub"></div>
+          <div class="cent-out-earn"  id="cent-out-earn">+$0.00</div>
+          <div class="cent-out-cap"   id="cent-out-cap"></div>
+        </div>
+      </div>
+
+      <div class="cent-right">
+        <div class="cent-panel-sec">
+          <div class="cent-panel-lbl">Node</div>
+          <div class="cent-stat-big" id="cent-node-big">1</div>
+          <div class="cent-stat-sub" id="cent-node-sub">Game ends: 10–20 nodes</div>
+        </div>
+        <div class="cent-panel-sec">
+          <div class="cent-panel-lbl">Your Position</div>
+          <div class="cent-stat-big" id="cent-pos-big" style="font-size:18px;padding-top:4px;">Player 1</div>
+          <div class="cent-stat-sub" id="cent-pos-sub">moves first</div>
+        </div>
+        <div class="cent-panel-sec">
+          <div class="cent-panel-lbl">Split This Game</div>
+          <div class="cent-stat-big" id="cent-split-display" style="font-size:18px;padding-top:4px;">—</div>
+          <div class="cent-stat-sub">taker % / loser %</div>
+        </div>
+        <div class="cent-panel-sec" style="padding-bottom:7px;">
+          <div class="cent-panel-lbl">Move History</div>
+        </div>
+        <div class="cent-hist-list" id="cent-hist"></div>
+      </div>
+    </div>`;
+  },
+
+  // ── Canvas setup ──────────────────────────────────────────
+  _setupCanvas() {
+    const W = 320, H = 240;
+    const wrap = document.getElementById('coin-jar-wrap');
+    const canvas = document.getElementById('coin-canvas');
+    const rim    = document.getElementById('coin-jar-rim');
+    canvas.width = W; canvas.height = H;
+    wrap.style.width = W + 'px';
+    if (rim) rim.style.width = W + 'px';
+    this._canvas = canvas;
+    this._ctx    = canvas.getContext('2d');
+    const tag = document.getElementById('coin-combo-tag');
+    if (tag) tag.textContent = 'Coins fall in with each pass';
+  },
+
+  // ── Coin physics ──────────────────────────────────────────
+  // Real coin diameters (mm): dime=17.9, penny=19.1, nickel=21.2, quarter=24.3
+  // Scaled proportionally: dime=12px, penny=13px, nickel=14px, quarter=16px radius
+  _COIN_PROPS: {
+    Q: { r:16, face:'#9B9EA8', edge:'#5A5D65', label:'25¢', labelSize:9  },
+    D: { r:12, face:'#A8ABB5', edge:'#585A62', label:'10¢', labelSize:8  },
+    N: { r:14, face:'#8E9090', edge:'#4A4C4C', label:'5¢',  labelSize:8  },
+    P: { r:13, face:'#B5651D', edge:'#7A3A08', label:'1¢',  labelSize:8  },
+  },
+
+  // Pick a fresh random 50¢ combo for each pass
+  _pickCombo() {
+    return this._COIN_COMBOS[Math.floor(Math.random() * this._COIN_COMBOS.length)];
+  },
+
+  // Expand a combo into an array of coin type strings e.g. ['Q','D','N','N']
+  _expandCombo(combo) {
+    const coins = [];
+    for (let i = 0; i < combo.q; i++) coins.push('Q');
+    for (let i = 0; i < combo.d; i++) coins.push('D');
+    for (let i = 0; i < combo.n; i++) coins.push('N');
+    for (let i = 0; i < combo.p; i++) coins.push('P');
+    // Shuffle so they fall in random order
+    for (let i = coins.length-1; i > 0; i--) {
+      const j = Math.floor(Math.random()*(i+1));
+      [coins[i],coins[j]] = [coins[j],coins[i]];
+    }
+    return coins;
+  },
+
+  _spawnCoin(type, delayOffset) {
+    const W = 320;
+    const props = this._COIN_PROPS[type];
+    const r = props.r;
+    const doSpawn = () => {
+      this._coins.push({
+        type, r, props,
+        x:  r + Math.random() * (W - 2*r),
+        y:  -r - Math.random() * 8,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: 0.5 + Math.random() * 0.5,
+        settled: false,
+      });
+    };
+    if (delayOffset) setTimeout(doSpawn, delayOffset);
+    else doSpawn();
+  },
+
+  // Drop all coins from a fresh randomly-chosen 50¢ combo, staggered in time
+  _dropCombo() {
+    const combo  = this._pickCombo();
+    const coins  = this._expandCombo(combo);
+    coins.forEach((type, i) => this._spawnCoin(type, i * 80));
+    // Update jar label to show what was dropped
+    const parts = [];
+    if (combo.q) parts.push(combo.q + 'Q');
+    if (combo.d) parts.push(combo.d + 'D');
+    if (combo.n) parts.push(combo.n + 'N');
+    if (combo.p) parts.push(combo.p + 'P');
+    const tag = document.getElementById('coin-combo-tag');
+    if (tag) tag.textContent = 'Dropped: ' + parts.join(' + ');
+  },
+
+  _physicsStep() {
+    const W = 320, H = 240;
+    const GRAVITY = 0.35, DAMPING = 0.55, FRICTION = 0.88;
+    for (const c of this._coins) {
+      if (c.settled) continue;
+      c.vy += GRAVITY;
+      c.x  += c.vx;
+      c.y  += c.vy;
+      c.rotation += c.rotV;
+
+      // Walls
+      if (c.x - c.r < 0)  { c.x = c.r;   c.vx = Math.abs(c.vx) * DAMPING; }
+      if (c.x + c.r > W)  { c.x = W-c.r; c.vx = -Math.abs(c.vx) * DAMPING; }
+      // Floor
+      if (c.y + c.r > H)  {
+        c.y = H - c.r; c.vy *= -DAMPING; c.vx *= FRICTION;
+        c.rotV *= 0.7;
+        if (Math.abs(c.vy) < 0.5 && Math.abs(c.vx) < 0.3) { c.settled = true; c.vy = 0; c.vx = 0; c.rotV = 0; }
+      }
+    }
+    // Coin-coin collision
+    for (let i = 0; i < this._coins.length; i++) {
+      for (let j = i+1; j < this._coins.length; j++) {
+        const a = this._coins[i], b = this._coins[j];
+        if (a.settled && b.settled) continue;
+        const dx = b.x-a.x, dy = b.y-a.y;
+        const dist = Math.sqrt(dx*dx+dy*dy);
+        const md   = a.r + b.r;
+        if (dist < md && dist > 0.001) {
+          const nx = dx/dist, ny = dy/dist, ov = (md-dist)/2;
+          if (!a.settled) { a.x -= nx*ov; a.y -= ny*ov; }
+          if (!b.settled) { b.x += nx*ov; b.y += ny*ov; }
+          const rv = (b.vx-a.vx)*nx + (b.vy-a.vy)*ny;
+          if (rv < 0) {
+            const imp = rv * 0.5;
+            if (!a.settled) { a.vx += imp*nx; a.vy += imp*ny; }
+            if (!b.settled) { b.vx -= imp*nx; b.vy -= imp*ny; }
+          }
+        }
+      }
+    }
+  },
+
+  _drawCoin(ctx, coin) {
+    const { x, y, r, props } = coin;
+    const edgeH = Math.max(3, Math.round(r * 0.22)); // edge height proportional to radius
+
+    ctx.save();
+    ctx.translate(x, y);
+
+    // ── 3D edge (cylinder side) — drawn as a filled arc below the face ──
+    ctx.beginPath();
+    ctx.arc(0, edgeH, r, 0, Math.PI);         // bottom half arc offset down
+    ctx.lineTo(-r, 0);
+    ctx.arc(0, 0, r, Math.PI, 0);             // top half arc
+    ctx.closePath();
+    ctx.fillStyle = props.edge;
+    ctx.fill();
+
+    // ── Coin face — full circle, face-on ──
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+
+    // Radial gradient: bright highlight top-left, darker bottom-right
+    const grad = ctx.createRadialGradient(-r*0.30, -r*0.30, r*0.05, 0, 0, r);
+    grad.addColorStop(0,   shiftBrightness(props.face,  55));  // bright highlight
+    grad.addColorStop(0.4, shiftBrightness(props.face,  15));
+    grad.addColorStop(0.8, props.face);
+    grad.addColorStop(1,   shiftBrightness(props.face, -25));  // dark rim
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // ── Rim ring ──
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.strokeStyle = shiftBrightness(props.edge, 20);
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // ── Inner design ring ──
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.78, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+
+    // ── Denomination label ──
+    ctx.fillStyle = 'rgba(0,0,0,0.60)';
+    ctx.font = 'bold ' + props.labelSize + 'px "DM Mono",monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(props.label, 0, 0);
+
+    ctx.restore();
+  },
+
+  _startPhysics() {
+    const loop = () => {
+      this._physicsStep();
+      this._drawJar();
+      this._animId = requestAnimationFrame(loop);
+    };
+    this._animId = requestAnimationFrame(loop);
+  },
+
+  _drawJar() {
+    const ctx = this._ctx;
+    if (!ctx) return;
+    ctx.clearRect(0, 0, 320, 240);
+    for (const c of this._coins) this._drawCoin(ctx, c);
+  },
+
+  // ── Events ────────────────────────────────────────────────
+  _bindEvents() {
+    document.getElementById('cent-take').addEventListener('click', () => this._playerAction('take'));
+    document.getElementById('cent-pass').addEventListener('click', () => this._playerAction('pass'));
+  },
+
+  // ── Update UI ─────────────────────────────────────────────
+  _updateUI() {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+    const el  = id => document.getElementById(id);
+
+    el('cent-pot').textContent = '$' + s.pot.toFixed(2);
+    el('cent-node-big').textContent = s.node;
+
+    const actor = s.playerTurn ? 'Your turn' : "Opponent's turn";
+    el('cent-node-label').textContent = 'Node ' + s.node + ' \xb7 ' + actor;
+
+    // Position badge
+    const posEl = el('cent-pos-badge');
+    if (posEl) {
+      const label = s.playerGoesFirst ? 'Player 1 (moves first)' : 'Player 2 (moves second)';
+      posEl.textContent = label;
+      posEl.className = 'cent-position-badge ' + (s.playerGoesFirst ? 'p1' : 'p2');
+    }
+    const posBig = el('cent-pos-big');
+    if (posBig) posBig.textContent = s.playerGoesFirst ? 'Player 1' : 'Player 2';
+    const posSub = el('cent-pos-sub');
+    if (posSub) posSub.textContent = s.playerGoesFirst ? 'moves first' : 'moves second';
+
+    // Split display
+    const splitEl = el('cent-split-display');
+    if (splitEl) splitEl.textContent = Math.round(s.takerShare*100) + '% / ' + Math.round(s.loserShare*100) + '%';
+
+    // Payoffs — only show if hints on
+    const payoffsEl = el('cent-payoffs');
+    if (payoffsEl) payoffsEl.style.display = this._hintsEnabled ? 'flex' : 'none';
+    if (this._hintsEnabled) {
+      const takeYou = +(s.pot * s.takerShare).toFixed(2);
+      const nextPot = +(s.pot + cfg.growthPerNode).toFixed(2);
+      el('cent-take-you').textContent = '+$' + takeYou.toFixed(2);
+      el('cent-take-opp').textContent = 'Opponent gets $' + (s.pot * s.loserShare).toFixed(2) + ' (' + Math.round(s.loserShare*100) + '%)';
+      el('cent-pass-you').textContent = 'Pot grows to $' + nextPot.toFixed(2);
+      el('cent-pass-opp').textContent = s.playerTurn ? 'Opponent decides next' : 'You decide next';
+    }
+
+    el('cent-take').disabled = !s.playerTurn || s.gameOver || s.animating;
+    el('cent-pass').disabled = !s.playerTurn || s.gameOver || s.animating;
+
+    const statusEl = el('cent-status');
+    if (statusEl && s.playerTurn && !s.gameOver) {
+      statusEl.textContent = 'Your move \u2014 Take or Pass?';
+      statusEl.className = 'cent-status';
+    }
+
+    // Coin jar label
+    const jarLbl = el('coin-jar-label');
+    if (jarLbl) jarLbl.textContent = 'Pot: $' + s.pot.toFixed(2);
+  },
+
+  // ── Player action ─────────────────────────────────────────
+  async _playerAction(action) {
+    const s = this._state;
+    if (!s.playerTurn || s.gameOver || s.animating) return;
+    s.animating = true;
+    document.getElementById('cent-take').disabled = true;
+    document.getElementById('cent-pass').disabled = true;
+    s.history.push({ node: s.node, actor: 'player', action, pot: s.pot });
+    this._addHistItem(s.node, 'You', action, s.pot);
+    if (action === 'take') await this._endGame('player-took');
+    else await this._advanceNode();
+  },
+
+  // ── Advance node ──────────────────────────────────────────
+  async _advanceNode() {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+
+    // Drop a fresh random 50¢ coin combo into the jar for this pass
+    this._dropCombo();
+
+    s.pot = +(s.pot + cfg.growthPerNode).toFixed(2);
+    s.node++;
+    if (s.node > s.cap) { await this._endGame('cap-reached'); return; }
+    s.playerTurn = !s.playerTurn;
+    s.animating  = false;
+
+    const potEl = document.getElementById('cent-pot');
+    if (potEl) { potEl.classList.add('grow'); setTimeout(() => potEl.classList.remove('grow'), 300); }
+
+    this._updateUI();
+    if (!s.playerTurn) await this._opponentTurn();
+  },
+
+  // ── Opponent turn ─────────────────────────────────────────
+  async _opponentTurn() {
+    const s = this._state;
+    const statusEl = document.getElementById('cent-status');
+    const thinkTime = 800 + Math.random() * 1200;
+    if (statusEl) {
+      statusEl.innerHTML = 'Opponent is thinking <span class="thinking-dots"><span>.</span><span>.</span><span>.</span></span>';
+      statusEl.className = 'cent-status opponent';
+    }
+    await this._delay(thinkTime);
+    const action = Math.random() < this._academicTakeProb(s.node) ? 'take' : 'pass';
+    s.history.push({ node: s.node, actor: 'opponent', action, pot: s.pot });
+    this._addHistItem(s.node, 'Opponent', action, s.pot);
+    if (statusEl) { statusEl.textContent = ''; statusEl.className = 'cent-status'; }
+    if (action === 'take') await this._endGame('opponent-took');
+    else await this._advanceNode();
+  },
+
+  // ── End game ──────────────────────────────────────────────
+  async _endGame(outcome) {
+    const s = this._state;
+    s.gameOver = true; s.outcome = outcome;
+    const takerPct = Math.round(s.takerShare*100);
+    const loserPct = Math.round(s.loserShare*100);
+    let emoji, title, sub, earnings;
+
+    if (outcome === 'player-took') {
+      earnings = +(s.pot * s.takerShare).toFixed(2);
+      emoji = '\uD83D\uDCB0'; title = 'You took the pot';
+      sub = 'You claimed ' + takerPct + '% of the $' + s.pot.toFixed(2) + ' pot at node ' + s.node + '. Your opponent received $' + (s.pot * s.loserShare).toFixed(2) + ' (' + loserPct + '%).';
+    } else if (outcome === 'opponent-took') {
+      earnings = +(s.pot * s.loserShare).toFixed(2);
+      emoji = '\uD83D\uDE24'; title = 'Opponent took the pot';
+      sub = 'Your opponent claimed ' + takerPct + '% at node ' + s.node + '. You received $' + earnings.toFixed(2) + ' (the ' + loserPct + '% loser share).';
+    } else {
+      earnings = +(s.pot / 2).toFixed(2);
+      emoji = '\uD83E\uDD1D'; title = 'The game ended naturally';
+      sub = 'Both players passed until node ' + s.cap + '. The pot splits equally — $' + earnings.toFixed(2) + ' each.';
+    }
+    s.earnings = earnings;
+
+    const el = id => document.getElementById(id);
+    el('cent-out-emoji').textContent = emoji;
+    el('cent-out-title').textContent = title;
+    el('cent-out-sub').textContent   = sub;
+    el('cent-out-earn').textContent  = '+$' + earnings.toFixed(2);
+    el('cent-out-earn').className    = 'cent-out-earn ' + (earnings > 0 ? 'win' : 'lose');
+    el('cent-out-cap').textContent   = 'Secret stopping node was: ' + s.cap + ' \xb7 You were Player ' + s.playerPosition;
+
+    // Drop one final combo as a flourish when the game ends
+    this._dropCombo();
+
+    await this._delay(300);
+    el('cent-outcome').classList.add('show');
+    await this._delay(600);
+    this._shell.flashBalance(earnings);
+    await this._delay(3200);
+    this._shell.onGameComplete();
+  },
+
+  _addHistItem(node, actor, action, pot) {
+    const list = document.getElementById('cent-hist');
+    if (!list) return;
+    const el = document.createElement('div');
+    el.className = 'cent-hist-item';
+    el.innerHTML = '<span class="cent-hist-node">N' + node + '</span>'
+      + '<span class="cent-hist-actor">' + actor + '</span>'
+      + '<span class="cent-hist-action ' + (action==='take'?'take':'pass') + '">' + (action==='take'?'\u2715 TAKE':'\u2192 PASS') + '</span>';
+    list.insertBefore(el, list.firstChild);
+  },
+
+  getResults() {
+    const s = this._state;
+    const passes      = s.history.filter(h => h.action==='pass').length;
+    const playerPasses= s.history.filter(h => h.actor==='player' && h.action==='pass').length;
+    const exitNode    = s.node;
+    const takerPct   = Math.round(s.takerShare*100);
+    const loserPct   = Math.round(s.loserShare*100);
+    const posLabel   = 'Player ' + s.playerPosition + ' (' + (s.playerGoesFirst ? 'first mover' : 'second mover') + ')';
+    let title, profile, analysis;
+    if (s.outcome === 'player-took') {
+      if (exitNode <= 3) {
+        title='Early Defector';profile='The Backward Inductor';
+        analysis='You defected at node '+exitNode+' as '+posLabel+'. Only ~5% of players take this early in McKelvey & Palfrey data. The '+takerPct+'/'+loserPct+' split made early taking decisive.';
+      } else if (exitNode <= 8) {
+        title='Calculated Defector';profile='The Strategic Opportunist';
+        analysis='You passed '+playerPasses+' time'+(playerPasses!==1?'s':'')+' before defecting at node '+exitNode+' ('+posLabel+'). The '+takerPct+'/'+loserPct+' split this game.';
+      } else {
+        title='Late Defector';profile='The Patient Maximizer';
+        analysis='You cooperated to node '+exitNode+' as '+posLabel+' before taking. Secret cap was '+s.cap+'. The '+takerPct+'/'+loserPct+' split.';
+      }
+    } else if (s.outcome === 'opponent-took') {
+      title='Betrayed';profile='The Trusting Cooperator';
+      analysis='You passed '+playerPasses+' time'+(playerPasses!==1?'s':'')+' as '+posLabel+' — opponent defected at node '+exitNode+', leaving you with '+loserPct+'% ($'+s.earnings.toFixed(2)+').';
+    } else {
+      title='Full Cooperator';profile='The Altruistic Maximizer';
+      analysis='Both players passed until node '+s.cap+' ('+posLabel+'). Fewer than 4% of games end this way experimentally. The '+takerPct+'/'+loserPct+' split made defection tempting throughout.';
+    }
+    return {
+      title, profile, analysis,
+      balanceDelta: s.earnings,
+      stats: [
+        { val: '+$' + s.earnings.toFixed(2),        label: 'Earnings' },
+        { val: 'Node ' + exitNode,                   label: 'Game Ended' },
+        { val: takerPct + '% / ' + loserPct + '%',  label: 'Taker / Loser Split' },
+      ]
+    };
+  },
+
+  getSubmissionData() {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+    const playerPasses   = s.history.filter(h => h.actor==='player'   && h.action==='pass').length;
+    const opponentPasses = s.history.filter(h => h.actor==='opponent' && h.action==='pass').length;
+    const moveSeq = s.history.map(h => h.action==='take'?'T':'P').join('');
+    return {
+      // ── Game configuration (snapshot at time of play) ──────
+      config: {
+        cap_min:            cfg.capMin,             // 10 — secret stopping node range
+        cap_max:            cfg.capMax,             // 20
+        starting_pot:       cfg.startingPot,        // $2.00
+        growth_per_node:    cfg.growthPerNode,      // $0.50 per pass
+        loser_share_mean:   0.25,                   // truncated normal mean
+        loser_share_sd:     0.10,                   // truncated normal sd
+        loser_share_min:    0,                      // bounds
+        loser_share_max:    0.50,
+      },
+      // ── Random parameters drawn for this game ───────────────
+      drawn_params: {
+        secret_cap:         s.cap,                  // integer 10–20
+        taker_split_pct:    s.takerShare,           // winner's share (full range: 0.50–1.0)
+        loser_split_pct:    s.loserShare,           // loser's share  (full range: 0.0–0.50)
+      },
+      // ── Payoff structure ────────────────────────────────────
+      payoffs: {
+        taker_payoff:       +(s.pot * s.takerShare).toFixed(2),    // $ taker received
+        loser_payoff:       +(s.pot * s.loserShare).toFixed(2),    // $ loser received
+        cap_payoff_each:    +(s.pot / 2).toFixed(2),               // if game reaches cap
+        final_pot:          +s.pot.toFixed(2),
+      },
+      // ── Opponent model ──────────────────────────────────────
+      opponent_model: {
+        type:               'academic_phase1',
+        academic_a:         this._ACADEMIC_A,       // -3.2 (logistic intercept)
+        academic_b:         this._ACADEMIC_B,       // 0.28 (logistic slope)
+      },
+      // ── Player behaviour ────────────────────────────────────
+      is_first_mover:       s.playerGoesFirst,
+      player_position:      s.playerPosition,
+      num_passes_player:    playerPasses,
+      num_passes_opponent:  opponentPasses,
+      total_passes:         playerPasses + opponentPasses,
+      player_won:           s.outcome === 'player-took' || s.outcome === 'cap-reached',
+      player_took:          s.outcome === 'player-took',
+      opponent_took:        s.outcome === 'opponent-took',
+      reached_cap:          s.outcome === 'cap-reached',
+      exit_node:            s.node,
+      move_sequence:        moveSeq,
+      total_earnings:       +s.earnings.toFixed(2),
+    };
+  },
+
+  destroy() {
+    if (this._animId) cancelAnimationFrame(this._animId);
+    this._coins  = [];
+    this._canvas = null;
+    this._ctx    = null;
+    this._state  = null;
+    this._shell  = null;
+    this._animId = null;
+  },
+
+  _delay(ms) { return new Promise(r => setTimeout(r, ms)); },
+};
+
+// ── Coin colour helper (positive amt = lighten, negative = darken) ────────────
+function shiftBrightness(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.min(255, Math.max(0, (n>>16) + amt));
+  const g = Math.min(255, Math.max(0, ((n>>8)&0xff) + amt));
+  const b = Math.min(255, Math.max(0, (n&0xff) + amt));
+  return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+
+GameRegistry.register(GameCentipede);
+
+</script>
+
+<!-- GAME MODULE: DUEL -->
+<script>
+const GameDuel = {
+  id:        'duel',
+  name:      'The Duel',
+  shortName: 'The Duel',
+  category:  'theory',
+
+  _CONFIG: {
+    rounds:          10,
+    hitProbStep:     0.10,
+    hitPayoff:       20,
+    missPayoff:     -10,
+    shotPayoff:     -10,
+    impatienceMin:   1.1,
+    impatienceMax:   1.5,
+    roundsPerSession:5,
+  },
+
+  _state:        null,
+  _shell:        null,
+  _hintsEnabled: false,
+  _animId:       null,
+  _bullets:      [],
+  _canvas:       null,
+  _ctx:          null,
+
+  intro: {
+    title: 'The Duel',
+    desc:  'You and an opponent face off. Each round you can Shoot or Wait. The longer you wait, the more accurate your shot — but your opponent is doing the same calculation.',
+    rules: [
+      'Each round: choose Shoot or Wait simultaneously with your opponent',
+      'Hit probability starts at 10% and rises by 10% each round',
+      'Shoot and hit: +$20  |  Shoot and miss: -$10',
+      'If your opponent shoots and hits you: -$10',
+      'Both wait: cowboys step closer, accuracy increases',
+      'Game ends when someone shoots, or after round 10',
+    ]
+  },
+
+  mount(container, shellAPI, hintsEnabled) {
+    this._hintsEnabled = !!hintsEnabled;
+    this._shell        = shellAPI;
+    this._bullets      = [];
+    const cfg          = this._CONFIG;
+    const impatience   = cfg.impatienceMin + Math.random() * (cfg.impatienceMax - cfg.impatienceMin);
+
+    this._state = {
+      round:              1,
+      gameRound:          1,
+      totalGames:         cfg.roundsPerSession,
+      hitProb:            cfg.hitProbStep,
+      gameOver:           false,
+      impatience,
+      history:            [],
+      gameHistory:        [],
+      totalEarnings:      0,
+      animating:          false,
+      waitingForOpponent: false,
+      // cowboy positions: 0=far apart, 9=almost touching
+      stepsTaken:         0,
+      youDefeated:        false,
+      oppDefeated:        false,
+      duelLog:            [],   // per-duel records for getSubmissionData()
+    };
+
+    container.innerHTML = this._html();
+    this._setupCanvas();
+    this._bindEvents();
+    this._startLoop();
+    this._updateUI();
+  },
+
+  // ── SVG cowboy drawing helpers ─────────────────────────────────
+  // Returns SVG string for a cowboy. type='hero'|'villain', pose='idle'|'shoot'|'defeated'
+  // All drawn facing RIGHT. Villain is flipped via transform.
+  _cowboySVG(type, pose) {
+    const isHero    = type === 'hero';
+    const coat      = isHero ? '#7A4A22' : '#2A4060';
+    const coatD     = isHero ? '#5A3010' : '#182840';
+    const pants     = isHero ? '#3A5080' : '#5A3A1A';
+    const hatFill   = isHero ? '#3D2810' : '#1A1A1A';
+    const bandFill  = isHero ? '#8B0000' : '#C8A030';
+    const shirt     = isHero ? '#D4C090' : '#90A8C0';
+    const bandana   = isHero ? '#8B0000' : '#1A2840';
+    const skin      = '#E8B88A';
+    const skinD     = '#C89060';
+    const boot      = '#1A0E06';
+    const gun       = '#2A2A2A';
+    const gunGrip   = isHero ? '#4A3520' : '#C0B080';
+    const spur      = '#888060';
+    const star      = '#C8A030';
+
+    // Arm/gun position based on pose
+    // idle: arm at side. shoot: arm raised with gun pointed skyward. defeated: arm down, gun dropped
+    const shootArm = pose === 'shoot';
+    const defeated  = pose === 'defeated';
+
+    let armPath, gunGroup;
+    if (shootArm) {
+      // Right arm raised — fluid path from shoulder up to hand
+      armPath = `
+        <path d="M26,148 C38,138 52,114 58,88 C61,76 59,66 56,62 C52,57 46,60 42,68 C36,82 30,112 27,138 Z" fill="${coat}"/>
+        <path d="M50,92 C54,78 58,63 60,51 C62,43 64,38 66,35 C70,29 76,27 78,31 C80,35 78,43 74,53 C70,63 62,80 56,92 Z" fill="${coat}"/>
+        <ellipse cx="66" cy="43" rx="12" ry="10" fill="${skin}"/>
+      `;
+      gunGroup = `
+        <g transform="translate(66,31)">
+          <rect x="-3" y="-52" width="7" height="52" rx="2.5" fill="${gun}"/>
+          <rect x="-4" y="-54" width="9" height="6" rx="1.5" fill="#1A1A1A"/>
+          <rect x="-5" y="-2" width="11" height="20" rx="2.5" fill="${gun}"/>
+          <path d="M-5,5 Q-12,14 -5,24" stroke="#222" stroke-width="2.5" fill="none"/>
+          <rect x="-5" y="18" width="12" height="22" rx="3" fill="${gunGrip}"/>
+          <ellipse cx="0" cy="2" rx="7" ry="5" fill="#333"/>
+          <rect x="4" y="-5" width="6" height="10" rx="2" fill="#1A1A1A"/>
+          <rect x="-1" y="-54" width="2" height="5" rx="1" fill="#555"/>
+        </g>
+      `;
+    } else if (defeated) {
+      // Arm drooping, cowboy slumped
+      armPath = `
+        <path d="M26,148 C30,158 32,178 30,200 C29,210 24,215 20,216 C16,217 12,214 12,206 C12,196 18,172 22,155 Z" fill="${coat}"/>
+        <ellipse cx="18" cy="212" rx="9" ry="10" fill="${skin}"/>
+      `;
+      gunGroup = '';
+    } else {
+      // Idle: arm at side
+      armPath = `
+        <path d="M26,148 C30,158 32,178 30,205 C29,215 24,220 20,221 C16,222 12,220 12,212 C12,200 18,175 22,158 Z" fill="${coat}"/>
+        <ellipse cx="18" cy="217" rx="10" ry="11" fill="${skin}"/>
+        <rect x="10" y="219" width="7" height="13" rx="3" fill="${skin}"/>
+        <rect x="16" y="221" width="7" height="14" rx="3" fill="${skin}"/>
+        <rect x="22" y="221" width="7" height="12" rx="3" fill="${skin}"/>
+      `;
+      gunGroup = '';
+    }
+
+    // Left arm always at side
+    const leftArm = `
+      <path d="M-26,148 C-38,156 -44,178 -42,205 C-41,215 -36,220 -30,221 C-24,222 -18,220 -16,212 C-14,200 -18,175 -22,158 Z" fill="${coat}"/>
+      <ellipse cx="-30" cy="217" rx="10" ry="11" fill="${skin}"/>
+      <rect x="-38" y="219" width="7" height="13" rx="3" fill="${skin}"/>
+      <rect x="-32" y="221" width="7" height="14" rx="3" fill="${skin}"/>
+      <rect x="-26" y="221" width="7" height="12" rx="3" fill="${skin}"/>
+    `;
+
+    // Head tilt based on defeat
+    const headTransform = defeated ? 'rotate(20, 0, 90)' : '';
+    // Eye expression
+    const eyeL = defeated ? `<ellipse cx="-10" cy="80" rx="7" ry="3" fill="#FFFFF0"/><circle cx="-9" cy="81" r="3" fill="#2A1808"/>` :
+                            `<ellipse cx="-10" cy="80" rx="7" ry="5" fill="#FFFFF0"/><circle cx="-9" cy="81" r="4" fill="#2A1808"/>`;
+    const eyeR = defeated ? `<ellipse cx="10" cy="80" rx="7" ry="3" fill="#FFFFF0"/><circle cx="10" cy="81" r="3" fill="#2A1808"/>` :
+                            `<ellipse cx="10" cy="80" rx="7" ry="5" fill="#FFFFF0"/><circle cx="10" cy="81" r="4" fill="#2A1808"/>`;
+    const mouth = defeated
+      ? `<path d="M-10,110 Q0,106 10,110" stroke="#8B5030" stroke-width="2.5" fill="none" stroke-linecap="round"/>`
+      : isHero
+        ? `<path d="M-10,107 Q0,111 10,107" stroke="#8B5030" stroke-width="2.5" fill="none" stroke-linecap="round"/>`
+        : `<path d="M-10,107 Q-2,105 10,110" stroke="#7A3020" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+
+    const badge = isHero ? `<polygon points="-22,162 -20,156 -18,162 -12,162 -17,166 -15,172 -20,168 -25,172 -23,166 -28,162" fill="${star}"/>` : '';
+    const villainScar = !isHero ? `<line x1="-8" y1="95" x2="-12" y2="104" stroke="#C08060" stroke-width="1.5" opacity="0.5"/>` : '';
+    const hatCrown = isHero
+      ? `<rect x="-27" y="18" width="54" height="42" rx="7" fill="${hatFill}"/><rect x="-11" y="18" width="22" height="10" rx="3" fill="#2A1808"/>`
+      : `<rect x="-26" y="12" width="52" height="48" rx="5" fill="${hatFill}"/><line x1="-10" y1="12" x2="-10" y2="32" stroke="#2A2A2A" stroke-width="2"/><line x1="10" y1="12" x2="10" y2="32" stroke="#2A2A2A" stroke-width="2"/>`;
+
+    return `
+      <ellipse cx="0" cy="362" rx="42" ry="8" fill="#A89068" opacity="0.45"/>
+      <rect x="-28" y="318" width="22" height="46" rx="5" fill="${boot}"/>
+      <rect x="6"   y="318" width="23" height="46" rx="5" fill="${boot}"/>
+      <ellipse cx="-17" cy="362" rx="13" ry="6" fill="${boot}"/>
+      <ellipse cx="18"  cy="362" rx="13" ry="6" fill="${boot}"/>
+      <rect x="-30" y="343" width="8" height="10" rx="2" fill="${boot}" opacity="0.7"/>
+      <rect x="22"  y="343" width="8" height="10" rx="2" fill="${boot}" opacity="0.7"/>
+      <circle cx="-28" cy="354" r="5" fill="${spur}"/>
+      <line x1="-34" y1="354" x2="-22" y2="354" stroke="${spur}" stroke-width="1.5"/>
+      <circle cx="29" cy="354" r="5" fill="${spur}"/>
+      <line x1="23" y1="354" x2="35" y2="354" stroke="${spur}" stroke-width="1.5"/>
+      <rect x="-24" y="238" width="20" height="88" rx="7" fill="${pants}"/>
+      <rect x="4"   y="238" width="20" height="88" rx="7" fill="${pants}"/>
+      <rect x="-26" y="232" width="52" height="11" rx="3" fill="#2A1808"/>
+      <rect x="-8"  y="234" width="16" height="7" rx="2" fill="${star}"/>
+      <rect x="19"  y="239" width="11" height="22" rx="3" fill="${coatD}"/>
+      <rect x="-28" y="138" width="56" height="100" rx="9" fill="${coat}"/>
+      <polygon points="-28,138 -10,138 -16,182 -28,188" fill="${coatD}"/>
+      <polygon points="28,138 10,138 16,182 28,188" fill="${coatD}"/>
+      <rect x="-9" y="140" width="18" height="42" rx="3" fill="${shirt}"/>
+      ${badge}
+      <rect x="-28" y="218" width="23" height="20" rx="4" fill="${coat}"/>
+      <rect x="5"   y="218" width="23" height="20" rx="4" fill="${coat}"/>
+      ${leftArm}
+      ${armPath}
+      ${gunGroup}
+      <rect x="-8" y="115" width="16" height="28" rx="5" fill="${skin}"/>
+      <polygon points="-11,117 11,117 3,138 -3,138" fill="${bandana}"/>
+      <polygon points="-5,132 5,132 1,146 -1,146" fill="${bandana}"/>
+      <g transform="${headTransform}">
+        <ellipse cx="0" cy="88" rx="32" ry="34" fill="${skin}"/>
+        <ellipse cx="-31" cy="88" rx="8" ry="10" fill="${skin}"/>
+        <ellipse cx="31"  cy="88" rx="8" ry="10" fill="${skin}"/>
+        <ellipse cx="0"   cy="115" rx="20" ry="8" fill="${skin}"/>
+        <path d="M-15,70 Q-8,65 -4,70" stroke="#5A3010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M4,70 Q8,65 15,70"   stroke="#5A3010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        ${eyeL}
+        ${eyeR}
+        <circle cx="-7" cy="79" r="1.5" fill="white"/>
+        <circle cx="12" cy="79" r="1.5" fill="white"/>
+        <ellipse cx="0" cy="92" rx="5" ry="4" fill="${skinD}"/>
+        <circle cx="-3" cy="94" r="2" fill="${skinD}"/>
+        <circle cx="3"  cy="94" r="2" fill="${skinD}"/>
+        ${mouth}
+        ${villainScar}
+        <ellipse cx="0" cy="58" rx="43" ry="9" fill="${hatFill}"/>
+        ${hatCrown}
+        <rect x="-26" y="53" width="52" height="8" fill="${bandFill}"/>
+      </g>
+    `;
+  },
+
+  // ── HTML ───────────────────────────────────────────────────────
+  _html() {
+    return `<style>
+      #duel-root{display:flex;height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;}
+      .duel-main{flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;background:var(--cream);}
+
+      /* Arena fills most of left panel */
+      .duel-arena-wrap{flex:1;position:relative;overflow:hidden;}
+      #duel-arena-svg{width:100%;height:100%;}
+
+      /* Probability bg text */
+      #duel-prob-bg{
+        position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+        pointer-events:none;z-index:0;
+      }
+      #duel-prob-bg-text{
+        font-family:'DM Mono',monospace;font-weight:700;
+        color:#C0392B;opacity:0.13;line-height:1;
+        transition:font-size .4s ease, opacity .3s ease;
+        font-size:200px;
+        user-select:none;
+      }
+
+      /* Status overlay in arena */
+      #duel-arena-status{
+        position:absolute;top:14px;left:0;right:0;
+        text-align:center;z-index:5;pointer-events:none;
+        font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);
+        letter-spacing:.04em;
+      }
+      #duel-arena-status.thinking{color:var(--gold);}
+
+      /* Bullet canvas */
+      #duel-bullet-canvas{
+        position:absolute;inset:0;pointer-events:none;z-index:4;
+      }
+
+      /* Player name labels */
+      .duel-name-you{
+        position:absolute;bottom:8px;
+        font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;
+        text-transform:uppercase;color:var(--muted);
+      }
+      .duel-name-opp{
+        position:absolute;bottom:8px;right:0;
+        font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;
+        text-transform:uppercase;color:var(--muted);
+      }
+
+      /* Action buttons row */
+      .duel-actions{
+        display:flex;gap:14px;padding:12px 20px;
+        background:var(--surface);border-top:1px solid var(--border);
+        flex-shrink:0;justify-content:center;
+      }
+      #duel-shoot{min-width:150px;height:50px;font-size:13px;}
+      #duel-wait {min-width:150px;height:50px;font-size:13px;}
+
+      /* Payoffs pinned at very bottom */
+      .duel-payoffs{
+        display:flex;gap:8px;padding:10px 16px;
+        background:#1A1612;
+        flex-shrink:0;justify-content:center;align-items:center;
+        flex-wrap:wrap;
+      }
+      .duel-pf{
+        font-family:'DM Mono',monospace;font-size:11px;
+        padding:4px 10px;border-radius:2px;
+        border:1px solid rgba(255,255,255,.12);
+        color:rgba(245,240,232,.6);
+      }
+      .duel-pf.good{border-color:rgba(46,125,82,.4);color:#6EC994;}
+      .duel-pf.bad {border-color:rgba(192,57,43,.35);color:#E8806A;}
+
+      /* Outcome overlay */
+      #duel-outcome{
+        position:absolute;inset:0;z-index:20;
+        background:rgba(245,240,232,.96);
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        gap:10px;opacity:0;pointer-events:none;transition:opacity .3s ease;
+        text-align:center;padding:2rem;
+      }
+      #duel-outcome.show{opacity:1;pointer-events:auto;}
+      .duel-out-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:var(--ink);}
+      .duel-out-sub{font-size:13px;color:var(--muted);max-width:360px;line-height:1.65;}
+      .duel-out-earn{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;padding:8px 20px;border-radius:4px;}
+      .duel-out-earn.win {color:var(--green);background:rgba(46,125,82,.1);border:1px solid rgba(46,125,82,.2);}
+      .duel-out-earn.lose{color:var(--red);  background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.2);}
+      .duel-out-earn.draw{color:var(--muted);background:rgba(26,22,18,.05);border:1px solid var(--border-solid);}
+      .duel-out-theory{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;border:1px solid var(--border-solid);padding:5px 14px;border-radius:2px;max-width:380px;line-height:1.6;}
+
+      /* ── RIGHT PANEL ── */
+      .duel-right{width:256px;flex-shrink:0;border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;}
+      .duel-panel-sec{padding:13px 15px;border-bottom:1px solid var(--border);}
+      .duel-panel-lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+      .duel-stat-big{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;color:var(--ink);}
+      .duel-stat-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+      .duel-prob-ladder{display:flex;flex-direction:column;gap:4px;}
+      .duel-ladder-row{display:flex;align-items:center;gap:7px;padding:2px 0;}
+      .duel-ladder-rnd{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);min-width:26px;}
+      .duel-ladder-bar-bg{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+      .duel-ladder-bar-fill{height:100%;border-radius:3px;}
+      .duel-ladder-pct{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);min-width:32px;text-align:right;}
+      .duel-ladder-row.current .duel-ladder-rnd{color:var(--gold);font-weight:500;}
+      .duel-ladder-row.current .duel-ladder-pct{color:var(--gold);font-weight:500;}
+
+      .duel-hist-list{flex:1;overflow-y:auto;padding:8px 15px;}
+      .duel-hist-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);animation:fadeUp .2s ease;}
+      .duel-hist-game{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+      .duel-hist-res{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:2px 7px;border-radius:2px;}
+      .duel-hist-res.win {background:rgba(46,125,82,.12);color:var(--green);}
+      .duel-hist-res.lose{background:rgba(192,57,43,.12);color:var(--red);}
+      .duel-hist-res.draw{background:rgba(26,22,18,.06);color:var(--muted);}
+
+      .duel-game-dots{display:flex;gap:5px;align-items:center;margin-top:5px;}
+      .duel-game-dot{width:8px;height:8px;border-radius:50%;background:var(--border-solid);transition:background .3s ease;}
+      .duel-game-dot.win {background:var(--green);}
+      .duel-game-dot.lose{background:var(--red);}
+      .duel-game-dot.draw{background:var(--muted);}
+      .duel-game-dot.current{background:var(--gold);transform:scale(1.3);}
+
+      .thinking-dots span{animation:blink 1.2s ease-in-out infinite;opacity:0;}
+      .thinking-dots span:nth-child(2){animation-delay:.2s;}
+      .thinking-dots span:nth-child(3){animation-delay:.4s;}
+      @keyframes blink{0%,80%,100%{opacity:0;}40%{opacity:1;}}
+    </style>
+
+    <div id="duel-root">
+      <!-- LEFT: Arena + buttons + payoffs -->
+      <div class="duel-main">
+
+        <!-- Arena -->
+        <div class="duel-arena-wrap" id="duel-arena-wrap">
+          <!-- Big probability bg -->
+          <div id="duel-prob-bg">
+            <div id="duel-prob-bg-text">10%</div>
+          </div>
+
+          <!-- Status text -->
+          <div id="duel-arena-status">Ready</div>
+
+          <!-- Bullet canvas -->
+          <canvas id="duel-bullet-canvas"></canvas>
+
+          <!-- Cowboy SVG arena -->
+          <svg id="duel-arena-svg" viewBox="0 0 600 380" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+            <!-- Ground -->
+            <rect x="0" y="340" width="600" height="40" fill="#C8B48A"/>
+            <rect x="0" y="338" width="600" height="4" fill="#B8A478"/>
+            <line x1="30" y1="350" x2="160" y2="350" stroke="#B0A070" stroke-width="1" opacity="0.5"/>
+            <line x1="440" y1="350" x2="570" y2="350" stroke="#B0A070" stroke-width="1" opacity="0.5"/>
+
+            <!-- Hero cowboy (left, faces right) -->
+            <g id="duel-hero-g">
+              ${this._cowboySVG('hero','idle')}
+            </g>
+
+            <!-- Villain cowboy (right, faces left via flip) -->
+            <g id="duel-villain-g">
+              ${this._cowboySVG('villain','idle')}
+            </g>
+
+            <!-- Name labels inside SVG -->
+            <text id="duel-svg-you"  x="0"   y="380" font-family="DM Mono,monospace" font-size="11" fill="#7A7268" letter-spacing="0.08em">YOU</text>
+            <text id="duel-svg-opp"  x="600" y="380" font-family="DM Mono,monospace" font-size="11" fill="#7A7268" letter-spacing="0.08em" text-anchor="end">OPPONENT</text>
+          </svg>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="duel-actions">
+          <button class="btn btn-red"  id="duel-shoot" disabled>&#x1F52B; Shoot</button>
+          <button class="btn btn-dark" id="duel-wait"  disabled>&#x23F3; Wait</button>
+        </div>
+
+        <!-- Payoffs bar at very bottom -->
+        <div class="duel-payoffs">
+          <div class="duel-pf good">Hit &#x2192; +$20</div>
+          <div class="duel-pf bad">Miss &#x2192; -$10</div>
+          <div class="duel-pf bad">Get shot &#x2192; -$10</div>
+          <div class="duel-pf">Both wait &#x2192; +$0</div>
+        </div>
+
+        <!-- Outcome overlay (over the main panel) -->
+        <div id="duel-outcome">
+          <div class="duel-out-title" id="duel-out-title">Game Over</div>
+          <div class="duel-out-sub"   id="duel-out-sub"></div>
+          <div class="duel-out-earn"  id="duel-out-earn">+$0</div>
+          <div class="duel-out-theory" id="duel-out-theory"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="duel-right">
+        <div class="duel-panel-sec">
+          <div class="duel-panel-lbl">Game</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="duel-stat-big" id="duel-game-num">1</div>
+            <div style="font-size:12px;color:var(--muted);" id="duel-game-of">of 5</div>
+          </div>
+          <div class="duel-game-dots" id="duel-game-dots"></div>
+        </div>
+
+        <div class="duel-panel-sec">
+          <div class="duel-panel-lbl">Round This Game</div>
+          <div class="duel-stat-big" id="duel-round-num">1</div>
+          <div class="duel-stat-sub">of 10 max</div>
+        </div>
+
+        <div class="duel-panel-sec">
+          <div class="duel-panel-lbl">Session Earnings</div>
+          <div class="duel-stat-big" id="duel-total-earn" style="color:var(--green);">$0.00</div>
+          <div class="duel-stat-sub">added to balance</div>
+        </div>
+
+        <div class="duel-panel-sec">
+          <div class="duel-panel-lbl">Hit Probability Ladder</div>
+          <div class="duel-prob-ladder" id="duel-ladder"></div>
+        </div>
+
+        <div class="duel-panel-sec" style="padding-bottom:7px;flex-shrink:0;">
+          <div class="duel-panel-lbl">Game History</div>
+        </div>
+        <div class="duel-hist-list" id="duel-hist"></div>
+      </div>
+    </div>`;
+  },
+
+  // ── Canvas setup ───────────────────────────────────────────────
+  _setupCanvas() {
+    const wrap   = document.getElementById('duel-arena-wrap');
+    const canvas = document.getElementById('duel-bullet-canvas');
+    if (!canvas || !wrap) return;
+    const resize = () => { canvas.width = wrap.clientWidth; canvas.height = wrap.clientHeight; };
+    resize();
+    this._canvas = canvas;
+    this._ctx    = canvas.getContext('2d');
+  },
+
+  // ── Bullet animation loop ─────────────────────────────────────
+  _startLoop() {
+    const loop = () => {
+      this._drawBullets();
+      this._animId = requestAnimationFrame(loop);
+    };
+    this._animId = requestAnimationFrame(loop);
+  },
+
+  _drawBullets() {
+    const ctx = this._ctx;
+    if (!ctx || !this._canvas) return;
+    ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+    this._bullets = this._bullets.filter(b => b.t < 1.0);
+    for (const b of this._bullets) {
+      b.t += 0.022;
+      const t  = b.t;
+      const x  = b.x0 + (b.x1 - b.x0) * t;
+      // Parabolic arc — positive = rises then falls
+      const arc = b.hit ? -b.arcH * 4 * t * (1 - t) : -b.arcH * (1 - Math.pow(2*t-1, 2)) * (t < 0.7 ? 1 : (1-t)/0.3);
+      const y   = b.y0 + (b.y1 - b.y0) * t + arc;
+      // Fade out near end
+      const alpha = t > 0.85 ? (1 - t) / 0.15 : 1;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      // Trail
+      if (b.prevX !== undefined) {
+        ctx.beginPath();
+        ctx.moveTo(b.prevX, b.prevY);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = b.hit ? '#E8A020' : '#888';
+        ctx.lineWidth   = 2.5;
+        ctx.stroke();
+      }
+      // Bullet circle
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = b.hit ? '#C8A030' : '#666';
+      ctx.fill();
+      ctx.restore();
+      b.prevX = x;
+      b.prevY = y;
+    }
+  },
+
+  // Fire a bullet animation across the screen
+  _fireBullet(fromLeft, hit) {
+    const wrap = document.getElementById('duel-arena-wrap');
+    if (!wrap) return;
+    const W = wrap.clientWidth, H = wrap.clientHeight;
+    // Approximate gun tip positions (fraction of width)
+    const heroX   = W * 0.20;
+    const villainX= W * 0.80;
+    const gunY    = H * 0.22; // roughly where the raised gun is
+    this._bullets.push({
+      t:    0,
+      x0:   fromLeft ? heroX    : villainX,
+      y0:   gunY,
+      x1:   fromLeft ? villainX : heroX,
+      y1:   gunY,
+      arcH: hit ? H * 0.18 : H * (0.08 + Math.random() * 0.12),
+      hit,
+    });
+  },
+
+  // ── Cowboy position update ────────────────────────────────────
+  _updateCowboyPositions(heroX, villainX, heroPose, villainPose) {
+    const heroG    = document.getElementById('duel-hero-g');
+    const villainG = document.getElementById('duel-villain-g');
+    if (heroG) {
+      heroG.setAttribute('transform', `translate(${heroX}, 0)`);
+      heroG.innerHTML = this._cowboySVG('hero', heroPose);
+    }
+    if (villainG) {
+      // Villain faces LEFT — mirror with scale(-1,1) then translate
+      villainG.setAttribute('transform', `translate(${villainX}, 0) scale(-1,1)`);
+      villainG.innerHTML = this._cowboySVG('villain', villainPose);
+    }
+  },
+
+  // ── Update UI ─────────────────────────────────────────────────
+  _updateUI() {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+
+    // Probability background
+    const pct    = Math.round(s.hitProb * 100);
+    const probBg = document.getElementById('duel-prob-bg-text');
+    if (probBg) {
+      probBg.textContent = pct + '%';
+      // Grows as probability rises: 180px at 10% → 340px at 100%
+      const fs = 180 + (pct - 10) * 1.8;
+      probBg.style.fontSize  = fs + 'px';
+      probBg.style.opacity   = (0.08 + pct * 0.0012).toString();
+    }
+
+    // Cowboy positions — start far apart, step 30px closer each wait round
+    const baseHeroX    = 100;
+    const baseVillainX = 500;
+    const step         = s.stepsTaken * 28;
+    const heroX        = baseHeroX    + step;
+    const villainX     = baseVillainX - step;
+
+    this._updateCowboyPositions(heroX, villainX,
+      s.youDefeated   ? 'defeated' : 'idle',
+      s.oppDefeated   ? 'defeated' : 'idle'
+    );
+
+    // Hints: EV info — hidden unless hints on
+    const statusEl = document.getElementById('duel-arena-status');
+    if (statusEl && !s.animating && !s.gameOver) {
+      if (this._hintsEnabled) {
+        const ev = +(s.hitProb * cfg.hitPayoff + (1 - s.hitProb) * cfg.missPayoff).toFixed(2);
+        statusEl.textContent = `Round ${s.round} \xb7 EV(shoot) = $${ev}`;
+        statusEl.className   = 'duel-arena-status' + (ev > 0 ? '' : '');
+      } else {
+        statusEl.textContent = `Round ${s.round} \xb7 Your move`;
+        statusEl.className   = 'duel-arena-status';
+      }
+    }
+
+    // Buttons
+    const canAct = !s.gameOver && !s.animating && !s.waitingForOpponent;
+    const shootBtn = document.getElementById('duel-shoot');
+    const waitBtn  = document.getElementById('duel-wait');
+    if (shootBtn) shootBtn.disabled = !canAct;
+    if (waitBtn)  waitBtn.disabled  = !canAct;
+
+    // Right panel
+    const gameNumEl = document.getElementById('duel-game-num');
+    const gameOfEl  = document.getElementById('duel-game-of');
+    const roundEl   = document.getElementById('duel-round-num');
+    const earnEl    = document.getElementById('duel-total-earn');
+    if (gameNumEl) gameNumEl.textContent = s.gameRound;
+    if (gameOfEl)  gameOfEl.textContent  = 'of ' + s.totalGames;
+    if (roundEl)   roundEl.textContent   = s.round;
+    if (earnEl)    earnEl.textContent    = '$' + s.totalEarnings.toFixed(2);
+
+    this._updateLadder();
+    this._updateGameDots();
+  },
+
+  _updateLadder() {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+    const container = document.getElementById('duel-ladder');
+    if (!container) return;
+    let html = '';
+    for (let r = 1; r <= cfg.rounds; r++) {
+      const p   = +(r * cfg.hitProbStep).toFixed(2);
+      const pct = Math.round(p * 100);
+      const cls = r < s.round ? 'past' : r === s.round ? 'current' : 'future';
+      const color = p <= 0.3 ? 'var(--green)' : p <= 0.6 ? '#D4860A' : 'var(--red)';
+      const fillColor = cls === 'future' ? 'var(--border-solid)' : cls === 'past' ? 'var(--green)' : color;
+      html += `<div class="duel-ladder-row ${cls}">
+        <div class="duel-ladder-rnd">R${r}</div>
+        <div class="duel-ladder-bar-bg"><div class="duel-ladder-bar-fill" style="width:${pct}%;background:${fillColor}"></div></div>
+        <div class="duel-ladder-pct">${pct}%</div>
+      </div>`;
+    }
+    container.innerHTML = html;
+  },
+
+  _updateGameDots() {
+    const s = this._state;
+    const container = document.getElementById('duel-game-dots');
+    if (!container) return;
+    let html = '';
+    for (let g = 1; g <= s.totalGames; g++) {
+      const outcome = s.gameHistory[g - 1];
+      const cls = outcome === undefined
+        ? (g === s.gameRound ? 'current' : '')
+        : outcome > 0 ? 'win' : outcome < 0 ? 'lose' : 'draw';
+      html += `<div class="duel-game-dot ${cls}"></div>`;
+    }
+    container.innerHTML = html;
+  },
+
+  // ── Events ────────────────────────────────────────────────────
+  _bindEvents() {
+    document.getElementById('duel-shoot').addEventListener('click', () => this._playerAction('shoot'));
+    document.getElementById('duel-wait').addEventListener('click',  () => this._playerAction('wait'));
+  },
+
+  // ── Player action ─────────────────────────────────────────────
+  async _playerAction(action) {
+    const s = this._state;
+    if (s.gameOver || s.animating || s.waitingForOpponent) return;
+    s.animating = true;
+    s.waitingForOpponent = true;
+    document.getElementById('duel-shoot').disabled = true;
+    document.getElementById('duel-wait').disabled  = true;
+
+    const statusEl = document.getElementById('duel-arena-status');
+    if (statusEl) {
+      statusEl.innerHTML = `Opponent deciding <span class="thinking-dots"><span>.</span><span>.</span><span>.</span></span>`;
+      statusEl.className = 'duel-arena-status thinking';
+    }
+
+    await this._delay(700 + Math.random() * 900);
+
+    const oppAction = this._opponentDecide();
+    if (statusEl) { statusEl.textContent = ''; statusEl.className = 'duel-arena-status'; }
+
+    await this._resolveRound(action, oppAction);
+  },
+
+  _opponentDecide() {
+    const s = this._state;
+    const nashQ     = Math.max(0, (30 * s.hitProb - 10) / 20);
+    const adjustedQ = Math.min(1, nashQ * s.impatience);
+    if (s.round <= 2) return 'wait';
+    if (s.round === 3) return Math.random() < 0.08 * s.impatience ? 'shoot' : 'wait';
+    return Math.random() < adjustedQ ? 'shoot' : 'wait';
+  },
+
+  // ── Resolve round ─────────────────────────────────────────────
+  async _resolveRound(playerAction, oppAction) {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+
+    s.history.push({ round: s.round, hitProb: s.hitProb, playerAction, oppAction });
+
+    // ── Both wait ──────────────────────────────────────────────
+    if (playerAction === 'wait' && oppAction === 'wait') {
+      s.stepsTaken++;  // cowboys step closer
+      const statusEl = document.getElementById('duel-arena-status');
+      if (statusEl) statusEl.textContent = 'Both waited \u2014 one step closer\u2026';
+
+      if (s.round >= cfg.rounds) {
+        await this._delay(600);
+        await this._endGame(0, 'stalemate');
+      } else {
+        s.round++;
+        s.hitProb   = +(s.hitProb + cfg.hitProbStep).toFixed(2);
+        s.animating = false;
+        s.waitingForOpponent = false;
+        this._updateUI();
+      }
+      return;
+    }
+
+    // ── At least one shoots ────────────────────────────────────
+    const playerHit = playerAction === 'shoot' && Math.random() < s.hitProb;
+    const oppHit    = oppAction    === 'shoot' && Math.random() < s.hitProb;
+
+    // Show shoot poses
+    const heroX    = 100 + s.stepsTaken * 28;
+    const villainX = 500 - s.stepsTaken * 28;
+    if (playerAction === 'shoot') this._updateCowboyPositions(heroX, villainX, 'shoot', s.oppDefeated ? 'defeated' : oppAction === 'shoot' ? 'shoot' : 'idle');
+    if (oppAction    === 'shoot') this._updateCowboyPositions(heroX, villainX, playerAction === 'shoot' ? 'shoot' : 'idle', 'shoot');
+
+    await this._delay(300);
+
+    // Fire bullet animations
+    if (playerAction === 'shoot') this._fireBullet(true,  playerHit);
+    if (oppAction    === 'shoot') this._fireBullet(false, oppHit);
+
+    await this._delay(900);
+
+    // Determine earnings and outcome
+    let playerEarnings = 0;
+    let title, sub, earnClass;
+
+    if (playerAction === 'shoot' && oppAction === 'shoot') {
+      if (playerHit && oppHit) {
+        playerEarnings = cfg.hitPayoff + cfg.shotPayoff;
+        title = 'Both shot \u2014 you both hit'; sub = `A rare simultaneous exchange. +$20 hit, -$10 hit. Net: +$10.`; earnClass = 'win';
+        s.oppDefeated = true;
+      } else if (playerHit) {
+        playerEarnings = cfg.hitPayoff;
+        title = 'Both shot \u2014 you hit!'; sub = `Your shot landed, theirs missed. +$20.`; earnClass = 'win';
+        s.oppDefeated = true;
+      } else if (oppHit) {
+        playerEarnings = cfg.shotPayoff;
+        title = 'Both shot \u2014 you got hit'; sub = `Their shot landed, yours missed. -$10.`; earnClass = 'lose';
+        s.youDefeated = true;
+      } else {
+        playerEarnings = cfg.missPayoff;
+        title = 'Both shot \u2014 both missed'; sub = `Both shots went wide. You pay the miss penalty: -$10.`; earnClass = 'lose';
+      }
+    } else if (playerAction === 'shoot') {
+      if (playerHit) {
+        playerEarnings = cfg.hitPayoff;
+        title = 'You shot \u2014 and hit!'; sub = `At ${Math.round(s.hitProb*100)}%, your shot connected. +$20.`; earnClass = 'win';
+        s.oppDefeated = true;
+      } else {
+        playerEarnings = cfg.missPayoff;
+        title = 'You shot \u2014 and missed'; sub = `At ${Math.round(s.hitProb*100)}%, the shot went wide. -$10.`; earnClass = 'lose';
+      }
+    } else {
+      if (oppHit) {
+        playerEarnings = cfg.shotPayoff;
+        title = 'Opponent shot \u2014 and hit you'; sub = `They fired at ${Math.round(s.hitProb*100)}% and connected. -$10.`; earnClass = 'lose';
+        s.youDefeated = true;
+      } else {
+        playerEarnings = 0;
+        title = 'Opponent shot \u2014 and missed'; sub = `They fired and missed. You earn $0 this round.`; earnClass = 'draw';
+      }
+    }
+
+    // Update cowboy poses after resolution
+    this._updateCowboyPositions(heroX, villainX,
+      s.youDefeated ? 'defeated' : 'idle',
+      s.oppDefeated ? 'defeated' : 'idle'
+    );
+
+    await this._delay(300);
+    await this._endGame(playerEarnings, 'shot', title, sub, earnClass);
+  },
+
+  // ── End game ──────────────────────────────────────────────────
+  async _endGame(earnings, reason, title, sub, earnClass) {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+    s.gameOver = true;
+    s.totalEarnings = +(s.totalEarnings + earnings).toFixed(2);
+    s.gameHistory.push(earnings);
+
+    // Record per-duel data for submission
+    const waitSeq = s.history.map(h =>
+      h.playerAction === 'shoot' || h.oppAction === 'shoot' ? 'S' : 'W'
+    ).join('');
+    const lastH = s.history[s.history.length - 1] || {};
+    s.duelLog.push({
+      exitRound:    s.round,
+      playerAction: lastH.playerAction || null,
+      oppAction:    lastH.oppAction    || null,
+      playerHit:    reason === 'stalemate' ? false : (lastH.playerAction === 'shoot' && earnings > 0 && !(lastH.oppAction === 'shoot')),
+      oppHit:       reason === 'stalemate' ? false : (lastH.oppAction === 'shoot' && earnings < 0),
+      earnings,
+      waitSeq,
+    });
+
+    const earnEl = document.getElementById('duel-total-earn');
+    if (earnEl) earnEl.textContent = '$' + s.totalEarnings.toFixed(2);
+
+    const nashQ      = Math.max(0, (30 * s.hitProb - 10) / 20);
+    const theoryNote = reason === 'stalemate'
+      ? 'Stalemate \u2014 neither fired in 10 rounds. Nash predicts mixing from round 4 (p=40%).'
+      : `Hit prob: ${Math.round(s.hitProb*100)}% \xb7 Nash mix: ${Math.round(nashQ*100)}% \xb7 EV(shoot): $${(s.hitProb*cfg.hitPayoff+(1-s.hitProb)*cfg.missPayoff).toFixed(2)}`;
+
+    if (reason === 'stalemate') { title = 'Stalemate'; sub = 'Neither player fired in 10 rounds. $0 each.'; earnClass = 'draw'; }
+
+    document.getElementById('duel-out-title').textContent   = title || 'Game Over';
+    document.getElementById('duel-out-sub').textContent     = sub   || '';
+    document.getElementById('duel-out-earn').textContent    = (earnings >= 0 ? '+' : '') + '$' + earnings.toFixed(2);
+    document.getElementById('duel-out-earn').className      = 'duel-out-earn ' + (earnClass || 'draw');
+    document.getElementById('duel-out-theory').textContent  = theoryNote;
+
+    await this._delay(200);
+    document.getElementById('duel-outcome').classList.add('show');
+    await this._delay(500);
+    this._shell.flashBalance(earnings);
+
+    // Add history entry
+    const list = document.getElementById('duel-hist');
+    if (list) {
+      const el = document.createElement('div');
+      el.className = 'duel-hist-item';
+      const res = earnClass || 'draw';
+      const earn = (earnings >= 0 ? '+' : '') + '$' + earnings.toFixed(2);
+      el.innerHTML = `<span class="duel-hist-game">Game ${s.gameRound}</span><span class="duel-hist-res ${res}">${earn}</span>`;
+      list.insertBefore(el, list.firstChild);
+    }
+
+    await this._delay(3500);
+
+    if (s.gameRound >= s.totalGames) {
+      this._shell.onGameComplete();
+    } else {
+      this._startNextGame();
+    }
+  },
+
+  _startNextGame() {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+    document.getElementById('duel-outcome').classList.remove('show');
+    s.gameRound++;
+    s.round        = 1;
+    s.hitProb      = cfg.hitProbStep;
+    s.gameOver     = false;
+    s.animating    = false;
+    s.waitingForOpponent = false;
+    s.history      = [];
+    s.stepsTaken   = 0;
+    s.youDefeated  = false;
+    s.oppDefeated  = false;
+    // duelLog accumulates across all games in the session — do NOT reset
+    s.impatience   = cfg.impatienceMin + Math.random() * (cfg.impatienceMax - cfg.impatienceMin);
+    this._updateUI();
+  },
+
+  getResults() {
+    const s   = this._state;
+    const wins   = s.gameHistory.filter(e => e > 0).length;
+    const losses = s.gameHistory.filter(e => e < 0).length;
+    const draws  = s.gameHistory.filter(e => e === 0).length;
+    const total  = s.totalEarnings;
+    let title, profile, analysis;
+    if (total >= 15) {
+      title = 'Precision Duelist'; profile = 'The Patient Marksman';
+      analysis = `You earned $${total.toFixed(2)} \u2014 the duelist's ideal. Waiting for high probability then acting decisively. Nash recommends mixing from round 4 (p=40%). Most real players shoot 1\u20132 rounds too early out of fear.`;
+    } else if (total >= 0) {
+      title = 'Steady Hand'; profile = 'The Calibrated Risk-Taker';
+      analysis = `A balanced $${total.toFixed(2)} across ${s.totalGames} duels. The classic tension: wait for better odds, or shoot first. Most players cluster around rounds 4\u20135, where Nash mixing begins.`;
+    } else if (losses > wins) {
+      title = 'Trigger-Happy'; profile = 'The Impatient Shooter';
+      analysis = `More losses than wins ($${total.toFixed(2)}). Shooting too early at low probabilities produces negative EV. Break-even is p=33% (round 4). Fear of being shot first drives most premature action.`;
+    } else {
+      title = 'Too Cautious'; profile = 'The Reluctant Duelist';
+      analysis = `Waiting too long cedes initiative. The optimal strategy mixes shooting and waiting from round 4 onward \u2014 not pure waiting.`;
+    }
+    return {
+      title, profile, analysis,
+      balanceDelta: total,
+      stats: [
+        { val: '$' + total.toFixed(2),               label: 'Total Earnings' },
+        { val: wins + 'W / ' + losses + 'L / ' + draws + 'D', label: 'W / L / Draw' },
+        { val: String(s.totalGames),                 label: 'Duels Played' },
+      ]
+    };
+  },
+
+  getSubmissionData() {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+    const wins   = s.gameHistory.filter(e => e > 0).length;
+    const losses = s.gameHistory.filter(e => e < 0).length;
+    const draws  = s.gameHistory.filter(e => e === 0).length;
+    const avgExitRound = s.duelLog.length > 0
+      ? +(s.duelLog.reduce((a, d) => a + d.exitRound, 0) / s.duelLog.length).toFixed(2)
+      : null;
+    const duels = s.duelLog.map((d, i) => ({
+      duel_index:    i + 1,
+      exit_round:    d.exitRound,
+      exit_prob:     +(d.exitRound * cfg.hitProbStep).toFixed(2),
+      player_shot:   d.playerAction === 'shoot',
+      opponent_shot: d.oppAction    === 'shoot',
+      player_hit:    !!d.playerHit,
+      opponent_hit:  !!d.oppHit,
+      rounds_waited: d.exitRound - 1,
+      earnings:      +d.earnings.toFixed(2),
+      wait_sequence: d.waitSeq || '',
+    }));
+    return {
+      // ── Game configuration (snapshot at time of play) ──────
+      config: {
+        max_rounds:          cfg.rounds,            // 10
+        hit_prob_step:       cfg.hitProbStep,       // 0.10 per round
+        hit_prob_start:      cfg.hitProbStep,       // 0.10 at round 1
+        hit_prob_end:        1.0,                   // 1.00 at round 10
+        duels_per_session:   cfg.roundsPerSession,  // 5
+      },
+      // ── Payoff structure ────────────────────────────────────
+      payoffs: {
+        hit_payoff:          cfg.hitPayoff,         // +$20
+        miss_payoff:         cfg.missPayoff,        // -$10
+        shot_payoff:         cfg.shotPayoff,        // -$10 (being hit)
+        wait_payoff:         0,                     // $0 if both wait
+        // Note: both shoot and both hit = hit_payoff + shot_payoff = +$10 net
+        both_hit_net:        cfg.hitPayoff + cfg.shotPayoff,  // +$10
+      },
+      // ── Opponent model params ────────────────────────────────
+      opponent_model: {
+        type:                'crra_impatience_phase1',
+        impatience_range:    [cfg.impatienceMin, cfg.impatienceMax],   // [1.1, 1.5]
+        impatience_drawn:    +s.impatience.toFixed(3),  // this session's draw
+        nash_break_even_round: 4,                   // round where EV(shoot) first > 0
+      },
+      // ── Summary ──────────────────────────────────────────────
+      total_duels:          s.totalGames,
+      wins, losses, draws,
+      avg_exit_round:       avgExitRound,
+      total_earnings:       +s.totalEarnings.toFixed(2),
+      duels,
+    };
+  },
+
+  destroy() {
+    if (this._animId) cancelAnimationFrame(this._animId);
+    this._bullets  = [];
+    this._canvas   = null;
+    this._ctx      = null;
+    this._state    = null;
+    this._shell    = null;
+    this._animId   = null;
+  },
+
+  _delay(ms) { return new Promise(r => setTimeout(r, ms)); },
+};
+
+GameRegistry.register(GameDuel);
+
+</script>
+
+<!-- GAME MODULE: DUTCH_AUCTION -->
+<script>
+const GameDutchAuction = {
+  id:        'dutch-auction',
+  name:      'The Dutch Auction',
+  shortName: 'Dutch Auction',
+  category:  'theory',
+
+  // ── Config ─────────────────────────────────────────────────
+  _CONFIG: {
+    N:             3,       // total bidders including player
+    valueMin:      0,
+    valueMax:      100,
+    clockMin:      0,
+    clockMax:      100,
+    clockSpeed:    50,      // ms per tick (clock drops 1 unit per tick)
+    rounds:        5,       // rounds per session
+    // CRRA baseline (CSW 1988)
+    riskAversion:  { min: 0.30, max: 0.70 },
+    clockDiscount: 0.92,    // Dutch non-isomorphism (Coppinger et al. 1980)
+    noiseSD:       4,       // bid noise std dev
+  },
+
+  _state: null,
+  _shell: null,
+  _hintsEnabled: false,
+  _clockInterval: null,
+
+  // ── Intro ───────────────────────────────────────────────────
+  intro: {
+    title: 'The Dutch Auction',
+    desc:  'The price starts high and falls. Stop the clock to place your bid — but if you wait too long, someone else might win first. You know your private value and that all other bidders draw from the same uniform distribution.',
+    rules: [
+      'You are assigned a private value (0–100) — your max willingness to pay',
+      'The clock descends from 100 → 0. Stop it to bid at that price',
+      'The first bidder to stop the clock wins and pays that price',
+      'Payoff = your value minus your winning bid (profit if positive)',
+      'If you don\'t stop in time, another bidder wins',
+      'There are 3 total bidders — you and 2 simulated opponents',
+    ]
+  },
+
+  // ── Mount ───────────────────────────────────────────────────
+  mount(container, shellAPI, hintsEnabled) {
+    this._hintsEnabled = !!hintsEnabled;
+    this._shell = shellAPI;
+    this._state = {
+      round:         1,
+      totalRounds:   this._CONFIG.rounds,
+      value:         0,
+      clockPrice:    this._CONFIG.clockMax,
+      running:       false,
+      won:           false,
+      roundOver:     false,
+      history:       [],
+      totalEarnings: 0,
+      opponentBids:  [],    // [{value, bid, r}] for each opponent this round
+      animating:     false,
+    };
+
+    container.innerHTML = this._html();
+    this._bindEvents();
+    this._startRound();
+  },
+
+  // ── HTML ────────────────────────────────────────────────────
+  _html() {
+    return `
+    <style>
+      #dutch-root {
+        display:flex; height:100%; overflow:hidden;
+        font-family:'DM Sans',sans-serif;
+      }
+
+      /* ── MAIN AREA ── */
+      .dutch-main {
+        flex:1; display:flex; flex-direction:column;
+        align-items:center; justify-content:center;
+        padding:24px; gap:20px; position:relative;
+        background:var(--cream);
+      }
+
+      /* ── BID PRICE (above clock) ── */
+      .dutch-bid-display {
+        text-align:center;
+      }
+      .dutch-bid-label {
+        font-family:'DM Mono',monospace; font-size:10px;
+        letter-spacing:.16em; text-transform:uppercase;
+        color:var(--muted); margin-bottom:4px;
+      }
+      .dutch-bid-price {
+        font-family:'Playfair Display',serif;
+        font-size:clamp(56px,7vw,80px);
+        font-weight:900; line-height:1;
+        color:var(--ink); transition:color .15s ease;
+      }
+      .dutch-bid-price.danger { color:var(--red); }
+      .dutch-bid-price.safe   { color:var(--green); }
+      .dutch-bid-sub {
+        font-family:'DM Mono',monospace; font-size:11px;
+        color:var(--muted); margin-top:4px;
+      }
+
+      /* ── CLOCK RING ── */
+      .dutch-clock-wrap {
+        position:relative; width:200px; height:200px;
+        display:flex; align-items:center; justify-content:center;
+        flex-shrink:0;
+      }
+      .dutch-clock-svg {
+        position:absolute; inset:0; transform:rotate(-90deg);
+      }
+      .clock-track {
+        fill:none; stroke:var(--border-solid); stroke-width:10;
+      }
+      .clock-progress {
+        fill:none; stroke-width:10;
+        stroke-linecap:round;
+        transition:stroke-dashoffset .05s linear, stroke .3s ease;
+      }
+      .dutch-clock-pct {
+        font-family:'DM Mono',monospace; font-size:32px;
+        font-weight:500; color:var(--ink);
+        text-align:center; line-height:1;
+      }
+      .dutch-clock-sub {
+        font-family:'DM Mono',monospace; font-size:10px;
+        letter-spacing:.1em; text-transform:uppercase;
+        color:var(--muted); text-align:center; margin-top:2px;
+      }
+
+      /* ── BID BUTTON ── */
+      .dutch-bid-btn-wrap {
+        display:flex; flex-direction:column; align-items:center; gap:8px;
+      }
+      #dutch-bid-btn {
+        width:180px; height:60px; font-size:14px;
+        letter-spacing:.12em;
+        transition:transform .08s ease, background .15s ease, box-shadow .15s ease;
+      }
+      #dutch-bid-btn:not(:disabled):hover {
+        transform:scale(1.04);
+        box-shadow:0 6px 20px rgba(26,22,18,.18);
+      }
+      #dutch-bid-btn:not(:disabled):active { transform:scale(.97); }
+      .dutch-bid-note {
+        font-size:11px; color:var(--muted);
+        font-family:'DM Mono',monospace; text-align:center;
+      }
+
+      /* ── PROFIT PREVIEW ── */
+      .dutch-profit-preview {
+        display:flex; align-items:center; gap:20px;
+      }
+      .dutch-pp-card {
+        background:var(--surface); border:1px solid var(--border);
+        border-radius:4px; padding:10px 16px; text-align:center;
+        min-width:110px;
+      }
+      .dutch-pp-label {
+        font-family:'DM Mono',monospace; font-size:9px;
+        letter-spacing:.12em; text-transform:uppercase;
+        color:var(--muted); margin-bottom:5px;
+      }
+      .dutch-pp-val {
+        font-family:'DM Mono',monospace; font-size:17px;
+        font-weight:500;
+      }
+      .dutch-pp-val.positive { color:var(--green); }
+      .dutch-pp-val.negative { color:var(--red); }
+      .dutch-pp-val.neutral  { color:var(--muted); }
+      .dutch-pp-arrow { font-size:18px; color:var(--muted); }
+
+      /* ── OUTCOME OVERLAY ── */
+      #dutch-outcome {
+        position:absolute; inset:0; z-index:20;
+        background:rgba(245,240,232,.95);
+        display:flex; flex-direction:column;
+        align-items:center; justify-content:center;
+        gap:12px; opacity:0; pointer-events:none;
+        transition:opacity .3s ease; text-align:center; padding:2rem;
+      }
+      #dutch-outcome.show { opacity:1; pointer-events:auto; }
+      .dutch-out-emoji { font-size:52px; }
+      .dutch-out-title {
+        font-family:'Playfair Display',serif;
+        font-size:26px; font-weight:900; color:var(--ink);
+      }
+      .dutch-out-sub {
+        font-size:13px; color:var(--muted);
+        max-width:340px; line-height:1.65;
+      }
+      .dutch-out-earn {
+        font-family:'DM Mono',monospace; font-size:20px;
+        font-weight:500; padding:8px 20px; border-radius:4px;
+      }
+      .dutch-out-earn.win {
+        color:var(--green);
+        background:rgba(46,125,82,.1);
+        border:1px solid rgba(46,125,82,.2);
+      }
+      .dutch-out-earn.lose {
+        color:var(--muted);
+        background:rgba(26,22,18,.06);
+        border:1px solid var(--border-solid);
+      }
+      .dutch-out-theory {
+        font-size:11px; color:var(--muted);
+        font-family:'DM Mono',monospace;
+        border:1px solid var(--border-solid);
+        padding:5px 14px; border-radius:2px; max-width:340px;
+        line-height:1.55; text-align:center;
+      }
+
+      /* ── RIGHT PANEL ── */
+      .dutch-right {
+        width:262px; flex-shrink:0;
+        border-left:1px solid var(--border);
+        background:var(--surface);
+        display:flex; flex-direction:column; overflow:hidden;
+      }
+      .dutch-panel-sec {
+        padding:14px 16px; border-bottom:1px solid var(--border);
+      }
+      .dutch-panel-lbl {
+        font-family:'DM Mono',monospace; font-size:10px;
+        letter-spacing:.12em; text-transform:uppercase;
+        color:var(--muted); margin-bottom:8px;
+      }
+      .dutch-stat-big {
+        font-family:'DM Mono',monospace; font-size:28px;
+        font-weight:500; color:var(--ink);
+      }
+      .dutch-stat-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+      .dutch-value-bar-bg {
+        height:6px; background:var(--border); border-radius:3px;
+        overflow:hidden; margin-top:8px;
+      }
+      .dutch-value-bar-fill {
+        height:100%; border-radius:3px; background:var(--gold);
+        transition:width .4s ease;
+      }
+
+      /* Nash line in value bar */
+      .dutch-value-bar-wrap {
+        position:relative; margin-top:8px;
+      }
+      .dutch-nash-marker {
+        position:absolute; top:-4px;
+        width:2px; height:14px; background:var(--ink);
+        border-radius:1px;
+      }
+      .dutch-nash-label {
+        position:absolute; top:12px;
+        font-family:'DM Mono',monospace; font-size:8px;
+        color:var(--ink); white-space:nowrap;
+        transform:translateX(-50%);
+      }
+
+      .dutch-hist-list { flex:1; overflow-y:auto; padding:8px 16px; }
+      .dutch-hist-item {
+        display:flex; justify-content:space-between; align-items:center;
+        padding:6px 0; border-bottom:1px solid var(--border);
+        animation:fadeUp .2s ease;
+      }
+      .dutch-hist-rnd  { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); }
+      .dutch-hist-info { font-size:12px; color:var(--ink); }
+      .dutch-hist-res  {
+        font-family:'DM Mono',monospace; font-size:11px;
+        font-weight:500; padding:2px 7px; border-radius:2px;
+      }
+      .dutch-hist-res.win  { background:rgba(46,125,82,.12); color:var(--green); }
+      .dutch-hist-res.lose { background:rgba(26,22,18,.06);   color:var(--muted); }
+
+      /* Round progress */
+      .dutch-round-prog { height:3px; background:var(--border); border-radius:2px; overflow:hidden; margin-top:8px; }
+      .dutch-round-fill { height:100%; background:var(--gold); border-radius:2px; transition:width .4s ease; }
+    </style>
+
+    <div id="dutch-root">
+      <!-- MAIN -->
+      <div class="dutch-main">
+
+        <!-- Bid price (above clock) -->
+        <div class="dutch-bid-display">
+          <div class="dutch-bid-label">Current Bid Price</div>
+          <div class="dutch-bid-price" id="dutch-price">100</div>
+          <div class="dutch-bid-sub" id="dutch-price-sub">Waiting to start...</div>
+        </div>
+
+        <!-- Clock ring -->
+        <div class="dutch-clock-wrap">
+          <svg class="dutch-clock-svg" viewBox="0 0 200 200">
+            <circle class="clock-track"    cx="100" cy="100" r="85"/>
+            <circle class="clock-progress" cx="100" cy="100" r="85"
+              id="dutch-clock-arc"
+              stroke="#C8A84B"
+              stroke-dasharray="534"
+              stroke-dashoffset="0"/>
+          </svg>
+          <div>
+            <div class="dutch-clock-pct" id="dutch-clock-pct">100%</div>
+            <div class="dutch-clock-sub">elapsed</div>
+          </div>
+        </div>
+
+        <!-- Bid button (below clock) -->
+        <div class="dutch-bid-btn-wrap">
+          <button class="btn btn-dark" id="dutch-bid-btn" disabled>Stop Clock — Bid</button>
+          <div class="dutch-bid-note" id="dutch-bid-note">Start the round to begin</div>
+        </div>
+
+        <!-- Profit preview -->
+        <div class="dutch-profit-preview">
+          <div class="dutch-pp-card">
+            <div class="dutch-pp-label">Your Value</div>
+            <div class="dutch-pp-val neutral" id="dutch-pp-value">—</div>
+          </div>
+          <div class="dutch-pp-arrow">−</div>
+          <div class="dutch-pp-card">
+            <div class="dutch-pp-label">Bid Price</div>
+            <div class="dutch-pp-val neutral" id="dutch-pp-bid">—</div>
+          </div>
+          <div class="dutch-pp-arrow">=</div>
+          <div class="dutch-pp-card">
+            <div class="dutch-pp-label">Your Profit</div>
+            <div class="dutch-pp-val neutral" id="dutch-pp-profit">—</div>
+          </div>
+        </div>
+
+        <!-- Outcome overlay -->
+        <div id="dutch-outcome">
+          <div class="dutch-out-emoji" id="dutch-out-emoji">🏆</div>
+          <div class="dutch-out-title" id="dutch-out-title">You won!</div>
+          <div class="dutch-out-sub"   id="dutch-out-sub"></div>
+          <div class="dutch-out-earn"  id="dutch-out-earn">+$0.00</div>
+          <div class="dutch-out-theory" id="dutch-out-theory"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="dutch-right">
+
+        <div class="dutch-panel-sec">
+          <div class="dutch-panel-lbl">Round</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div class="dutch-stat-big" id="dutch-round-num">1</div>
+            <div style="font-size:12px;color:var(--muted);" id="dutch-round-of">of 5</div>
+          </div>
+          <div class="dutch-round-prog">
+            <div class="dutch-round-fill" id="dutch-round-fill" style="width:20%"></div>
+          </div>
+        </div>
+
+        <div class="dutch-panel-sec">
+          <div class="dutch-panel-lbl">Your Private Value</div>
+          <div class="dutch-stat-big" id="dutch-value-display" style="color:var(--gold);">—</div>
+          <div class="dutch-stat-sub">drawn from Uniform[0, 100]</div>
+          <!-- Value + Nash bar -->
+          <div class="dutch-value-bar-wrap">
+            <div class="dutch-value-bar-bg">
+              <div class="dutch-value-bar-fill" id="dutch-value-bar" style="width:0%"></div>
+            </div>
+            <div class="dutch-nash-marker" id="dutch-nash-marker" style="left:0%"></div>
+            <div class="dutch-nash-label"  id="dutch-nash-label">Nash</div>
+          </div>
+          <div class="dutch-stat-sub" style="margin-top:10px;" id="dutch-nash-info">Nash bid: — (2/3 of value)</div>
+          <div id="dutch-nash-wrap"></div>
+        </div>
+
+        <div class="dutch-panel-sec">
+          <div class="dutch-panel-lbl">Session Earnings</div>
+          <div class="dutch-stat-big" id="dutch-total-earn" style="color:var(--green);">$0.00</div>
+          <div class="dutch-stat-sub">added to your balance</div>
+        </div>
+
+        <div class="dutch-panel-sec" style="padding-bottom:8px;">
+          <div class="dutch-panel-lbl">Round History</div>
+        </div>
+        <div class="dutch-hist-list" id="dutch-hist"></div>
+      </div>
+    </div>`;
+  },
+
+  // ── Events ──────────────────────────────────────────────────
+  _bindEvents() {
+    document.getElementById('dutch-bid-btn')
+      .addEventListener('click', () => this._playerBid());
+  },
+
+  // ── Start a round ───────────────────────────────────────────
+  _startRound() {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+
+    // Draw player value
+    s.value      = Math.floor(Math.random() * (cfg.valueMax - cfg.valueMin + 1)) + cfg.valueMin;
+    s.clockPrice = cfg.clockMax;
+    s.running    = false;
+    s.won        = false;
+    s.roundOver  = false;
+    s.animating  = false;
+
+    // Draw opponent bids upfront (they bid as if sealed-bid at game start,
+    // but we reveal their stopping point only when the clock reaches it)
+    s.opponentBids = this._drawOpponentBids();
+
+    // Update static UI
+    this._updateRoundHeader();
+    this._updateValuePanel();
+    this._updateClockDisplay(cfg.clockMax);
+    this._updateProfitPreview(cfg.clockMax);
+
+    document.getElementById('dutch-outcome').classList.remove('show');
+    document.getElementById('dutch-bid-btn').disabled = false;
+    document.getElementById('dutch-bid-note').textContent =
+      'Press to stop the clock and bid at that price';
+
+    // Short delay then start clock
+    setTimeout(() => this._runClock(), 600);
+  },
+
+  // ── Generate opponent bids ──────────────────────────────────
+  // CRRA model: b*(v) = v * (N-1) / (N-1+r) * clockDiscount + noise
+  _drawOpponentBids() {
+    const cfg = this._CONFIG;
+    const opponents = [];
+    const N = cfg.N;
+
+    for (let i = 0; i < N - 1; i++) {
+      const v = Math.floor(Math.random() * (cfg.valueMax - cfg.valueMin + 1)) + cfg.valueMin;
+      const r = cfg.riskAversion.min +
+                Math.random() * (cfg.riskAversion.max - cfg.riskAversion.min);
+
+      // CRRA bid formula (CSW 1988)
+      const crraBid = v * (N - 1) / (N - 1 + r);
+
+      // Dutch clock discount (Coppinger, Smith & Titus 1980)
+      const discountedBid = crraBid * cfg.clockDiscount;
+
+      // Add Gaussian noise, truncated to [0, v]
+      const noise = this._gaussianNoise(0, cfg.noiseSD);
+      const finalBid = Math.max(0, Math.min(v, Math.round(discountedBid + noise)));
+
+      opponents.push({ value: v, bid: finalBid, r: +r.toFixed(2) });
+    }
+
+    return opponents;
+  },
+
+  // ── Run the clock ───────────────────────────────────────────
+  _runClock() {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+    s.running = true;
+
+    this._clockInterval = setInterval(() => {
+      if (s.roundOver) { clearInterval(this._clockInterval); return; }
+
+      s.clockPrice = Math.max(cfg.clockMin, s.clockPrice - 1);
+      this._updateClockDisplay(s.clockPrice);
+      this._updateProfitPreview(s.clockPrice);
+
+      // Check if any opponent bids at this price
+      const opponentWinner = s.opponentBids.find(o => o.bid === s.clockPrice);
+      if (opponentWinner) {
+        clearInterval(this._clockInterval);
+        s.running = false;
+        this._opponentWins(opponentWinner);
+        return;
+      }
+
+      // Clock hits 0 — nobody bid
+      if (s.clockPrice <= cfg.clockMin) {
+        clearInterval(this._clockInterval);
+        s.running = false;
+        this._noBidOutcome();
+      }
+    }, cfg.clockSpeed);
+  },
+
+  // ── Player stops clock ──────────────────────────────────────
+  _playerBid() {
+    const s = this._state;
+    if (s.roundOver || s.animating) return;
+    if (!s.running && s.clockPrice === this._CONFIG.clockMax) {
+      // Player bid before clock even started — treat as bid at 100
+    }
+
+    clearInterval(this._clockInterval);
+    s.running   = false;
+    s.roundOver = true;
+
+    const bid    = s.clockPrice;
+    const profit = Math.max(0, s.value - bid);
+    // Player wins (they stopped clock first — no opponent had bid yet at this or higher price)
+    // Check if opponent's bid is >= player's bid (opponent would have stopped before this)
+    const beatByOpponent = s.opponentBids.find(o => o.bid >= bid);
+
+    if (beatByOpponent) {
+      // Opponent would have stopped at a higher price — opponent won
+      this._opponentWins(beatByOpponent, true);
+    } else {
+      // Player wins
+      this._playerWins(bid, profit);
+    }
+  },
+
+  // ── Player wins ─────────────────────────────────────────────
+  async _playerWins(bid, profit) {
+    const s   = this._state;
+    s.won     = true;
+    s.animating = true;
+
+    const cfg      = this._CONFIG;
+    const N        = cfg.N;
+    const nashBid  = Math.round(s.value * (N - 1) / N);
+    const crraBid  = Math.round(s.value * (N - 1) / (N - 1 + 0.5) * cfg.clockDiscount);
+    const deviation = bid - nashBid;
+    const deviationLabel = deviation > 0
+      ? `${deviation} above Nash`
+      : deviation < 0
+      ? `${Math.abs(deviation)} below Nash`
+      : 'exactly at Nash';
+
+    s.history.push({ round: s.round, won: true, value: s.value, bid, profit });
+    s.totalEarnings = +(s.totalEarnings + profit).toFixed(2);
+
+    document.getElementById('dutch-out-emoji').textContent = profit > 0 ? '🏆' : '😬';
+    document.getElementById('dutch-out-title').textContent = profit > 0 ? 'You won!' : 'You won — at a loss';
+    document.getElementById('dutch-out-sub').textContent =
+      `You stopped the clock at ${bid} with a value of ${s.value}. ` +
+      `Profit: $${profit.toFixed(2)}. Your bid was ${deviationLabel} equilibrium.`;
+    document.getElementById('dutch-out-earn').textContent = `+$${profit.toFixed(2)}`;
+    document.getElementById('dutch-out-earn').className =
+      `dutch-out-earn ${profit > 0 ? 'win' : 'lose'}`;
+    document.getElementById('dutch-out-theory').textContent =
+      `Nash bid (risk-neutral, N=3): ${nashBid}  ·  ` +
+      `CRRA bid (r=0.5, empirical): ${crraBid}  ·  Your bid: ${bid}`;
+
+    this._addHistItem(s.round, s.value, bid, true, profit);
+    document.getElementById('dutch-total-earn').textContent =
+      '$' + s.totalEarnings.toFixed(2);
+
+    await this._delay(200);
+    document.getElementById('dutch-outcome').classList.add('show');
+    await this._delay(600);
+    this._shell.flashBalance(profit);
+    document.getElementById('dutch-bid-btn').disabled = true;
+
+    await this._delay(3500);
+    this._nextRound();
+  },
+
+  // ── Opponent wins ───────────────────────────────────────────
+  async _opponentWins(opponent, playerTriedToBid = false) {
+    const s = this._state;
+    s.roundOver = true;
+    s.animating = true;
+
+    s.history.push({ round: s.round, won: false, value: s.value, bid: null, profit: 0 });
+
+    const cfg      = this._CONFIG;
+    const N        = cfg.N;
+    const nashBid  = Math.round(s.value * (N - 1) / N);
+
+    document.getElementById('dutch-out-emoji').textContent = '🤦';
+    document.getElementById('dutch-out-title').textContent = playerTriedToBid
+      ? 'Too late — opponent bid higher'
+      : 'Opponent stopped the clock first';
+    document.getElementById('dutch-out-sub').textContent =
+      `An opponent (value: ${opponent.value}) bid ${opponent.bid} and won. ` +
+      `Your value was ${s.value} — your Nash optimal bid would have been ${nashBid}. ` +
+      `You earn $0 this round.`;
+    document.getElementById('dutch-out-earn').textContent = `$0.00`;
+    document.getElementById('dutch-out-earn').className   = 'dutch-out-earn lose';
+    document.getElementById('dutch-out-theory').textContent =
+      `Nash bid for your value (N=3): ${nashBid}  ·  ` +
+      `Opponent bid: ${opponent.bid} (value: ${opponent.value}, r: ${opponent.r})`;
+
+    this._addHistItem(s.round, s.value, null, false, 0);
+    document.getElementById('dutch-bid-btn').disabled = true;
+
+    await this._delay(200);
+    document.getElementById('dutch-outcome').classList.add('show');
+    await this._delay(3500);
+    this._nextRound();
+  },
+
+  // ── Nobody bids ─────────────────────────────────────────────
+  async _noBidOutcome() {
+    const s = this._state;
+    s.roundOver = true;
+    s.animating = true;
+
+    s.history.push({ round: s.round, won: false, value: s.value, bid: null, profit: 0 });
+
+    document.getElementById('dutch-out-emoji').textContent = '⌛';
+    document.getElementById('dutch-out-title').textContent = 'Clock ran out';
+    document.getElementById('dutch-out-sub').textContent =
+      `Nobody placed a bid. Your value was ${s.value}. You earn $0 this round.`;
+    document.getElementById('dutch-out-earn').textContent = `$0.00`;
+    document.getElementById('dutch-out-earn').className   = 'dutch-out-earn lose';
+    document.getElementById('dutch-out-theory').textContent =
+      `This is extremely rare — it suggests all bidders had very low values relative to the clock floor.`;
+
+    this._addHistItem(s.round, s.value, null, false, 0);
+    document.getElementById('dutch-bid-btn').disabled = true;
+
+    await this._delay(200);
+    document.getElementById('dutch-outcome').classList.add('show');
+    await this._delay(3000);
+    this._nextRound();
+  },
+
+  // ── Next round ──────────────────────────────────────────────
+  _nextRound() {
+    const s = this._state;
+    if (s.round >= s.totalRounds) {
+      this._shell.onGameComplete();
+      return;
+    }
+    s.round++;
+    this._startRound();
+  },
+
+  // ── Clock display ───────────────────────────────────────────
+  _updateClockDisplay(price) {
+    const pct = price / this._CONFIG.clockMax;
+    const circumference = 2 * Math.PI * 85; // r=85
+
+    const priceEl = document.getElementById('dutch-price');
+    const pctEl   = document.getElementById('dutch-clock-pct');
+    const arcEl   = document.getElementById('dutch-clock-arc');
+    const subEl   = document.getElementById('dutch-price-sub');
+
+    if (!priceEl) return;
+    priceEl.textContent = price;
+    pctEl.textContent   = price + '%';
+
+    // Colour transitions: gold → amber → red as price falls
+    priceEl.classList.remove('danger', 'safe');
+    if (price < 25)      priceEl.classList.add('danger');
+    else if (price > 60) priceEl.classList.add('safe');
+
+    // Arc: full at 100, empty at 0
+    arcEl.style.strokeDashoffset = circumference * (1 - pct);
+    arcEl.style.stroke = price > 60 ? '#C8A84B' : price > 25 ? '#D4860A' : '#C0392B';
+
+    if (subEl) subEl.textContent = `Bid this price · ${price}% of max`;
+  },
+
+  // ── Profit preview ──────────────────────────────────────────
+  _updateProfitPreview(price) {
+    const s = this._state;
+    const valueEl  = document.getElementById('dutch-pp-value');
+    const bidEl    = document.getElementById('dutch-pp-bid');
+    const profitEl = document.getElementById('dutch-pp-profit');
+    if (!valueEl) return;
+
+    const profit = s.value - price;
+    valueEl.textContent  = s.value;
+    valueEl.className    = 'dutch-pp-val neutral';
+    bidEl.textContent    = price;
+    bidEl.className      = 'dutch-pp-val neutral';
+    profitEl.textContent = profit >= 0 ? `+${profit}` : profit;
+    profitEl.className   = `dutch-pp-val ${profit > 0 ? 'positive' : profit < 0 ? 'negative' : 'neutral'}`;
+  },
+
+  // ── Round header ─────────────────────────────────────────────
+  _updateRoundHeader() {
+    const s = this._state;
+    const el = document.getElementById('dutch-round-num');
+    const of = document.getElementById('dutch-round-of');
+    const fill = document.getElementById('dutch-round-fill');
+    if (el)   el.textContent   = s.round;
+    if (of)   of.textContent   = `of ${s.totalRounds}`;
+    if (fill) fill.style.width = (s.round / s.totalRounds * 100) + '%';
+  },
+
+  // ── Value panel ──────────────────────────────────────────────
+  _updateValuePanel() {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+    const N   = cfg.N;
+
+    const nashBid = Math.round(s.value * (N - 1) / N);
+    const nashPct = (nashBid / cfg.valueMax) * 100;
+
+    const vd   = document.getElementById('dutch-value-display');
+    const vb   = document.getElementById('dutch-value-bar');
+    const nm   = document.getElementById('dutch-nash-marker');
+    const nl   = document.getElementById('dutch-nash-label');
+    const ni   = document.getElementById('dutch-nash-info');
+
+    if (vd) vd.textContent = s.value;
+    if (vb) vb.style.width = s.value + '%';
+    if (nm) { nm.style.left = nashPct + '%'; nm.style.display = this._hintsEnabled ? '' : 'none'; }
+    if (nl) { nl.style.left = nashPct + '%'; nl.textContent = `Nash ${nashBid}`; nl.style.display = this._hintsEnabled ? '' : 'none'; }
+    if (ni) { ni.textContent = `Nash bid: ${nashBid} (2/3 of your value)`; ni.style.display = this._hintsEnabled ? '' : 'none'; }
+  },
+
+  // ── History ─────────────────────────────────────────────────
+  _addHistItem(round, value, bid, won, profit) {
+    const list = document.getElementById('dutch-hist');
+    if (!list) return;
+    const el = document.createElement('div');
+    el.className = 'dutch-hist-item';
+    el.innerHTML = `
+      <span class="dutch-hist-rnd">R${round}</span>
+      <span class="dutch-hist-info">v:${value} ${bid !== null ? '→ b:' + bid : '→ lost'}</span>
+      <span class="dutch-hist-res ${won ? 'win' : 'lose'}">${won ? '+$' + profit.toFixed(2) : '$0'}</span>`;
+    list.insertBefore(el, list.firstChild);
+  },
+
+  // ── getResults() ─────────────────────────────────────────────
+  getResults() {
+    const s   = this._state;
+    const cfg = this._CONFIG;
+    const N   = cfg.N;
+
+    const wins    = s.history.filter(h => h.won);
+    const winRate = wins.length / s.history.length;
+    const total   = s.totalEarnings;
+
+    // Average bid ratio: bid / value for winning rounds
+    const avgBidRatio = wins.length > 0
+      ? wins.reduce((acc, h) => acc + h.bid / h.value, 0) / wins.length
+      : null;
+
+    const nashRatio = (N - 1) / N;  // 0.667 for N=3
+    const crraRatio = (N - 1) / (N - 1 + 0.5) * cfg.clockDiscount; // ~0.74
+
+    let title, profile, analysis;
+
+    if (avgBidRatio === null) {
+      title    = 'Priced Out';
+      profile  = 'The Unlucky Bidder';
+      analysis = `You didn't win any rounds this session. The Dutch auction is unforgiving — opponents who stop the clock early leave patient bidders empty-handed. The Nash equilibrium bid for N=3 is 2/3 of your value. Consider whether your values were simply outmatched, or whether you waited too long.`;
+    } else if (avgBidRatio < nashRatio - 0.05) {
+      title    = 'The Underbidder';
+      profile  = 'The Overly Patient Strategist';
+      analysis = `Your average bid ratio was ${(avgBidRatio * 100).toFixed(0)}% of value — well below the Nash equilibrium of ${(nashRatio * 100).toFixed(0)}%. You were shading too aggressively. While underbidding increases your profit when you win, it also dramatically reduces your win rate. You left wins on the table.`;
+    } else if (avgBidRatio > crraRatio + 0.08) {
+      title    = 'The Eager Bidder';
+      profile  = 'The Impatient Risk-Avoider';
+      analysis = `Your average bid ratio was ${(avgBidRatio * 100).toFixed(0)}% of value — above even the empirically observed CRRA benchmark of ~${(crraRatio * 100).toFixed(0)}%. You stopped the clock early out of fear of being beaten. This guarantees wins but at the cost of profit per win. Fear of losing is the most common overbidding driver.`;
+    } else {
+      title    = 'Well Calibrated';
+      profile  = 'The Strategic Shader';
+      analysis = `Your average bid ratio of ${(avgBidRatio * 100).toFixed(0)}% sits between the risk-neutral Nash benchmark (${(nashRatio * 100).toFixed(0)}%) and the empirically observed CRRA overbidding level (~${(crraRatio * 100).toFixed(0)}%). You're shading optimally — balancing the probability of winning against profit per win. This is where the literature says sophisticated bidders land.`;
+    }
+
+    return {
+      title, profile, analysis,
+      balanceDelta: total,
+      stats: [
+        { val: '$' + total.toFixed(2),              label: 'Total Profit' },
+        { val: `${wins.length}/${s.history.length}`, label: 'Rounds Won' },
+        { val: avgBidRatio !== null
+            ? (avgBidRatio * 100).toFixed(0) + '% of v'
+            : '—',                                  label: 'Avg Bid Ratio' },
+      ]
+    };
+  },
+
+  // ── Destroy ───────────────────────────────────────────────────
+  getSubmissionData() {
+    const s = this._state, cfg = this._CONFIG, N = cfg.N;
+    const rounds = s.history.map(h => ({
+      round:      h.round,
+      value:      h.value,
+      bid:        h.bid,
+      won:        h.won,
+      profit:     +((h.won && h.bid != null ? h.value - h.bid : 0)).toFixed(2),
+      nash_bid:   Math.round(h.value * (N-1) / N),
+      bid_ratio:  h.bid != null ? +(h.bid / h.value).toFixed(3) : null,
+      opp_bid:    h.oppBid   || null,
+      opp_value:  h.oppValue || null,
+    }));
+    const winRounds = rounds.filter(r => r.won && r.bid != null);
+    const avgBidRatio = winRounds.length > 0
+      ? +(winRounds.reduce((a,r) => a + r.bid_ratio, 0) / winRounds.length).toFixed(3)
+      : null;
+    return {
+      // ── Game configuration (snapshot at time of play) ──────
+      config: {
+        n_bidders:           N,                     // 3 (1 player + 2 simulated)
+        value_min:           cfg.valueMin,          // 0
+        value_max:           cfg.valueMax,          // 100
+        clock_min:           cfg.clockMin,          // 0
+        clock_max:           cfg.clockMax,          // 100
+        clock_speed_ms:      cfg.clockSpeed,        // 50ms per tick — KEY for A/B testing
+        rounds_per_session:  cfg.rounds,            // 5
+        value_distribution:  'uniform',             // uniform[valueMin, valueMax]
+      },
+      // ── Payoff structure ────────────────────────────────────
+      payoffs: {
+        winner_payoff_formula: 'private_value - bid',
+        loser_payoff:          0,
+        nash_bid_formula:      'value × (N-1)/N',
+        nash_bid_ratio:        +((N-1)/N).toFixed(3),   // 0.667 for N=3
+        crra_bid_ratio_empirical: +((N-1)/(N-1+0.5) * cfg.clockDiscount).toFixed(3),
+      },
+      // ── Opponent model params ────────────────────────────────
+      opponent_model: {
+        type:                'crra_phase1',
+        crra_r_min:          cfg.riskAversion.min,  // 0.30
+        crra_r_max:          cfg.riskAversion.max,  // 0.70
+        clock_discount:      cfg.clockDiscount,     // 0.92 (Dutch non-isomorphism)
+        noise_sd:            cfg.noiseSD,            // 4
+      },
+      // ── Per-round data ──────────────────────────────────────
+      rounds_played:         rounds.length,
+      rounds,
+      wins:                  winRounds.length,
+      win_rate:              +(winRounds.length / rounds.length).toFixed(3),
+      avg_bid_ratio:         avgBidRatio,
+      total_earnings:        +s.totalEarnings.toFixed(2),
+    };
+  },
+
+  destroy() {
+    clearInterval(this._clockInterval);
+    this._state = null;
+    this._shell = null;
+    this._clockInterval = null;
+  },
+
+  // ── Helpers ───────────────────────────────────────────────────
+  _gaussianNoise(mean, sd) {
+    const u1 = Math.random(), u2 = Math.random();
+    return mean + sd * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  },
+  _delay(ms) { return new Promise(r => setTimeout(r, ms)); },
+};
+
+GameRegistry.register(GameDutchAuction);
+
+</script>
+
+<!-- GAME MODULE: COMMONS -->
+<script>
+const GameCommons = {
+  id:        'commons',
+  name:      'Tragedy of the Commons',
+  shortName: 'Fish Pond',
+  category:  'theory',
+
+  _CONFIG: {
+    initialStock:  100,
+    rounds:        3,
+    tankW:         380,
+    tankH:         240,
+    fishR:         10,
+    gravity:       0.25,
+    damping:       0.62,
+    threshold1:    Math.sqrt(2) - 1,
+    threshold2:    1.0,
+  },
+
+  _state:    null,
+  _shell:    null,
+  _animId:   null,
+  _fish:     [],
+  _canvas:   null,
+  _ctx:      null,
+  _hintsEnabled: false,
+
+  intro: {
+    title: 'Tragedy of the Commons',
+    desc:  'A shared pond starts with 100 fish. Each round you and an opponent simultaneously decide how much to harvest (0-50%). Fish left in the pond grow by factor (1+β).',
+    rules: [
+      'Each round: choose your harvest percentage (0-50% of current stock)',
+      'Both harvests happen simultaneously — then remaining fish grow by (1+β)',
+      'β is drawn randomly and shown at game start — higher means faster growth',
+      'All three rounds require your decision',
+      'Your total score = fish harvested across all three rounds (1 fish = $0.10)',
+    ]
+  },
+
+  mount(container, shellAPI, hintsEnabled) {
+    this._shell = shellAPI;
+    this._hintsEnabled = !!hintsEnabled;
+    const cfg = this._CONFIG;
+    const beta = +Math.random().toFixed(3);
+    this._state = {
+      beta,
+      nashR1: beta < cfg.threshold1 ? 0.5 : 0,
+      nashR2: beta < cfg.threshold2 ? 0.5 : 0,
+      stock:          cfg.initialStock,
+      round:          1,
+      totalHarvested: 0,
+      history:        [],
+      animating:      false,
+    };
+    container.innerHTML = this._html();
+    this._setupCanvas();
+    this._fish = [];
+    this._spawnFish(cfg.initialStock);
+    this._bindEvents();
+    this._startPhysics();
+    this._updateUI();
+  },
+
+  _html() {
+    return `<style>
+      #commons-root{display:flex;height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;}
+      .commons-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 18px;gap:11px;position:relative;background:var(--cream);overflow:hidden;}
+      .tank-wrap{position:relative;border:3px solid #2A6A8A;border-top:none;border-radius:0 0 14px 14px;background:linear-gradient(180deg,#B8E4F5 0%,#7EC8E3 40%,#4AADCC 100%);overflow:hidden;box-shadow:inset 0 -4px 12px rgba(0,0,0,.15),0 4px 16px rgba(42,106,138,.25);}
+      .tank-surface{height:10px;background:linear-gradient(180deg,rgba(255,255,255,.6) 0%,rgba(184,228,245,.8) 100%);border-bottom:2px solid rgba(255,255,255,.5);}
+      #fish-canvas{display:block;}
+      .tank-label{position:absolute;bottom:5px;right:8px;font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.7);letter-spacing:.06em;}
+      .beta-row{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:8px 16px;width:100%;max-width:400px;}
+      .beta-val{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;color:var(--ink);min-width:56px;}
+      .beta-divider{width:1px;height:28px;background:var(--border-solid);}
+      .beta-info{flex:1;}
+      .beta-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;}
+      .beta-desc{font-size:12px;color:var(--ink);line-height:1.45;}
+      .beta-nash{font-family:'DM Mono',monospace;font-size:10px;padding:3px 9px;border-radius:2px;background:rgba(200,168,75,.15);color:#8a6000;border:1px solid rgba(200,168,75,.3);white-space:nowrap;}
+      .harvest-section{width:100%;max-width:400px;}
+      .harvest-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+      .harvest-lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+      .harvest-pct{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--ink);}
+      .harvest-fish-count{font-size:11px;color:var(--muted);margin-top:1px;}
+      input[type=range]#harvest-slider{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:4px;background:var(--border-solid);outline:none;cursor:pointer;margin-bottom:6px;}
+      input[type=range]#harvest-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:var(--ink);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:background .15s ease;}
+      input[type=range]#harvest-slider::-webkit-slider-thumb:hover{background:var(--gold);}
+      .harvest-markers{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
+      .nash-hint{margin-top:5px;padding:5px 9px;border-radius:2px;font-size:11px;line-height:1.45;border:1px solid var(--border-solid);background:var(--surface);color:var(--muted);}
+      .nash-hint.take{border-color:rgba(192,57,43,.3);background:rgba(192,57,43,.05);color:var(--red);}
+      .nash-hint.wait{border-color:rgba(46,125,82,.3);background:rgba(46,125,82,.05);color:var(--green);}
+      #commons-confirm{width:190px;height:46px;}
+      .commons-status{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;text-align:center;min-height:16px;}
+      #commons-outcome{position:absolute;inset:0;z-index:20;background:rgba(245,240,232,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .35s ease;text-align:center;padding:2rem;}
+      #commons-outcome.show{opacity:1;pointer-events:auto;}
+      .commons-out-emoji{font-size:48px;}
+      .commons-out-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:var(--ink);}
+      .commons-out-sub{font-size:13px;color:var(--muted);max-width:360px;line-height:1.6;}
+      .commons-out-earn{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;padding:7px 18px;border-radius:4px;color:var(--green);background:rgba(46,125,82,.1);border:1px solid rgba(46,125,82,.2);}
+      .commons-out-theory{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;border:1px solid var(--border-solid);padding:5px 12px;border-radius:2px;max-width:380px;line-height:1.6;text-align:center;}
+      .commons-right{width:248px;flex-shrink:0;border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;}
+      .commons-panel-sec{padding:12px 14px;border-bottom:1px solid var(--border);}
+      .commons-panel-lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+      .commons-stat-big{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--ink);}
+      .commons-stat-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+      .round-track{display:flex;flex-direction:column;gap:5px;}
+      .round-row{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:3px;border:1px solid var(--border);background:var(--cream);transition:all .3s ease;}
+      .round-row.active{border-color:var(--gold);background:rgba(200,168,75,.08);}
+      .round-row.done{border-color:rgba(46,125,82,.3);background:rgba(46,125,82,.05);}
+      .round-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);min-width:22px;}
+      .round-info{flex:1;font-size:11px;color:var(--ink);line-height:1.35;}
+      .round-earn{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--green);}
+      .commons-hist-list{flex:1;overflow-y:auto;padding:7px 14px;}
+      .commons-hist-item{padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--ink);line-height:1.5;animation:fadeUp .2s ease;}
+      .commons-hist-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:1px;}
+    </style>
+    <div id="commons-root">
+      <div class="commons-main">
+        <div class="tank-wrap" id="tank-wrap">
+          <div class="tank-surface"></div>
+          <canvas id="fish-canvas"></canvas>
+          <div class="tank-label" id="tank-label">100 fish</div>
+        </div>
+        <div class="beta-row">
+          <div><div class="beta-lbl">Growth Rate β</div><div class="beta-val" id="beta-val">0.00</div></div>
+          <div class="beta-divider"></div>
+          <div class="beta-info"><div class="beta-lbl">Effect per round</div><div class="beta-desc" id="beta-desc">—</div></div>
+          <div class="beta-nash" id="beta-nash" style="display:none;">—</div>
+        </div>
+        <div class="harvest-section">
+          <div class="harvest-header">
+            <div><div class="harvest-lbl">Your Harvest — Round <span id="harvest-round-num">1</span></div><div class="harvest-fish-count" id="harvest-fish-count">= 0 fish from 100</div></div>
+            <div class="harvest-pct" id="harvest-pct">0%</div>
+          </div>
+          <input type="range" id="harvest-slider" min="0" max="50" value="0" step="1">
+          <div class="harvest-markers"><span>0%</span><span>25%</span><span>50%</span></div>
+          <div class="nash-hint" id="nash-hint" style="display:none;">—</div>
+        </div>
+        <button class="btn btn-dark" id="commons-confirm">Confirm Harvest →</button>
+        <div class="commons-status" id="commons-status">Choose your harvest for Round 1</div>
+        <div id="commons-outcome">
+          <div class="commons-out-emoji" id="commons-out-emoji">🐟</div>
+          <div class="commons-out-title" id="commons-out-title">Game Complete</div>
+          <div class="commons-out-sub" id="commons-out-sub"></div>
+          <div class="commons-out-earn" id="commons-out-earn">+0 fish</div>
+          <div class="commons-out-theory" id="commons-out-theory"></div>
+        </div>
+      </div>
+      <div class="commons-right">
+        <div class="commons-panel-sec"><div class="commons-panel-lbl">Current Stock</div><div class="commons-stat-big" id="commons-stock">100</div><div class="commons-stat-sub">fish in the pond</div></div>
+        <div class="commons-panel-sec"><div class="commons-panel-lbl">Your Total Harvest</div><div class="commons-stat-big" id="commons-total" style="color:var(--green);">0</div><div class="commons-stat-sub">fish collected</div></div>
+        <div class="commons-panel-sec"><div class="commons-panel-lbl">Rounds</div>
+          <div class="round-track">
+            <div class="round-row active" id="rrow-1"><div class="round-num">R1</div><div class="round-info">Pending</div><div class="round-earn"></div></div>
+            <div class="round-row" id="rrow-2"><div class="round-num">R2</div><div class="round-info">Pending</div><div class="round-earn"></div></div>
+            <div class="round-row" id="rrow-3"><div class="round-num">R3</div><div class="round-info">Pending</div><div class="round-earn"></div></div>
+          </div>
+        </div>
+        <div class="commons-panel-sec" style="padding-bottom:7px;"><div class="commons-panel-lbl">Round Log</div></div>
+        <div class="commons-hist-list" id="commons-hist"></div>
+      </div>
+    </div>`;
+  },
+
+  _setupCanvas() {
+    const cfg = this._CONFIG;
+    const canvas = document.getElementById('fish-canvas');
+    canvas.width = cfg.tankW; canvas.height = cfg.tankH;
+    document.getElementById('tank-wrap').style.width = cfg.tankW + 'px';
+    this._canvas = canvas; this._ctx = canvas.getContext('2d');
+  },
+
+  _spawnFish(count, fromTop = false) {
+    const { tankW: W, tankH: H, fishR: r } = this._CONFIG;
+    for (let i = 0; i < count; i++) {
+      this._fish.push({
+        x: r + Math.random()*(W-2*r), y: fromTop ? -r-Math.random()*50 : r+Math.random()*(H-2*r),
+        vx: (Math.random()-0.5)*3, vy: fromTop ? Math.random()*2 : (Math.random()-0.5)*2,
+        r, hue: 200+Math.floor(Math.random()*60),
+        facing: Math.random()>0.5?1:-1, tailPhase: Math.random()*Math.PI*2, tailSpeed: 0.08+Math.random()*0.06,
+      });
+    }
+  },
+
+  _removeFish(count) { this._fish.splice(0, Math.min(count, this._fish.length)); },
+
+  _physicsStep() {
+    const { tankW: W, tankH: H, gravity: g, damping: d } = this._CONFIG;
+    for (const f of this._fish) {
+      f.vy += g; f.x += f.vx; f.y += f.vy;
+      if (f.x-f.r<0)  { f.x=f.r;   f.vx= Math.abs(f.vx)*d; f.facing= 1; }
+      if (f.x+f.r>W)  { f.x=W-f.r; f.vx=-Math.abs(f.vx)*d; f.facing=-1; }
+      if (f.y-f.r<0)  { f.y=f.r;   f.vy= Math.abs(f.vy)*d; }
+      if (f.y+f.r>H)  { f.y=H-f.r; f.vy=-Math.abs(f.vy)*d*0.7; f.vx*=0.98; }
+      f.tailPhase += f.tailSpeed; if (f.tailPhase>Math.PI*2) f.tailPhase-=Math.PI*2;
+      if (Math.random()<0.02){f.vx+=(Math.random()-0.5)*0.4;f.vy+=(Math.random()-0.5)*0.2;}
+      const sp=Math.sqrt(f.vx*f.vx+f.vy*f.vy); if(sp>4){f.vx=f.vx/sp*4;f.vy=f.vy/sp*4;}
+      if(Math.abs(f.vx)>0.1) f.facing=f.vx>0?1:-1;
+    }
+    for(let i=0;i<this._fish.length;i++) for(let j=i+1;j<this._fish.length;j++){
+      const a=this._fish[i],b=this._fish[j];
+      const dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy),md=a.r+b.r;
+      if(dist<md&&dist>0.001){
+        const nx=dx/dist,ny=dy/dist,ov=(md-dist)/2;
+        a.x-=nx*ov;a.y-=ny*ov;b.x+=nx*ov;b.y+=ny*ov;
+        const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+        if(rv<0){const im=rv*0.7;a.vx+=im*nx;a.vy+=im*ny;b.vx-=im*nx;b.vy-=im*ny;}
+      }
+    }
+  },
+
+  _drawFish(ctx, f) {
+    const {x,y,r,hue,facing,tailPhase}=f, tail=Math.sin(tailPhase)*0.35;
+    ctx.save(); ctx.translate(x,y); ctx.scale(facing,1);
+    ctx.beginPath(); ctx.ellipse(0,0,r,r*0.6,0,0,Math.PI*2); ctx.fillStyle=`hsl(${hue},70%,55%)`; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-r*0.1,r*0.08,r*0.55,r*0.28,0,0,Math.PI*2); ctx.fillStyle=`hsl(${hue},40%,80%)`; ctx.globalAlpha=0.5; ctx.fill(); ctx.globalAlpha=1;
+    ctx.beginPath(); ctx.moveTo(-r*0.7,0); ctx.lineTo(-r*1.4,-r*0.55+tail*r); ctx.lineTo(-r*1.4,r*0.55+tail*r); ctx.closePath(); ctx.fillStyle=`hsl(${hue},65%,45%)`; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-r*0.1,-r*0.6); ctx.quadraticCurveTo(r*0.3,-r*1.1,r*0.5,-r*0.6); ctx.closePath(); ctx.fillStyle=`hsl(${hue},60%,48%)`; ctx.fill();
+    ctx.beginPath(); ctx.arc(r*0.45,-r*0.1,r*0.18,0,Math.PI*2); ctx.fillStyle='#1A1612'; ctx.fill();
+    ctx.beginPath(); ctx.arc(r*0.5,-r*0.14,r*0.07,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.fill();
+    ctx.restore();
+  },
+
+  _startPhysics() {
+    const loop=()=>{ this._physicsStep(); this._draw(); this._animId=requestAnimationFrame(loop); };
+    this._animId=requestAnimationFrame(loop);
+  },
+
+  _draw() {
+    const {tankW:W,tankH:H}=this._CONFIG, ctx=this._ctx;
+    if(!ctx) return;
+    ctx.clearRect(0,0,W,H);
+    for(const f of this._fish) this._drawFish(ctx,f);
+  },
+
+  _bindEvents() {
+    document.getElementById('harvest-slider').addEventListener('input', e => this._updateSliderUI(+e.target.value));
+    document.getElementById('commons-confirm').addEventListener('click', () => this._confirmHarvest());
+  },
+
+  _updateUI() {
+    const s=this._state, cfg=this._CONFIG, hints=this._hintsEnabled;
+    const el=id=>document.getElementById(id);
+    if(el('beta-val')) el('beta-val').textContent=s.beta.toFixed(3);
+    if(el('beta-desc')) el('beta-desc').textContent=`Fish grow by ${Math.round(s.beta*100)}% each round after harvest.`;
+    if(el('beta-nash')) {
+      if(hints) {
+        el('beta-nash').style.display='';
+        const a=s.round===1?(s.beta<cfg.threshold1?'Take 50%':'Take 0%'):(s.beta<cfg.threshold2?'Take 50%':'Take 0%');
+        el('beta-nash').textContent=`Nash R${s.round}: ${a}`;
+      } else { el('beta-nash').style.display='none'; }
+    }
+    if(el('commons-stock')) el('commons-stock').textContent=Math.round(s.stock);
+    if(el('commons-total')) el('commons-total').textContent=Math.round(s.totalHarvested);
+    if(el('tank-label'))    el('tank-label').textContent=Math.round(s.stock)+' fish';
+    if(el('harvest-round-num')) el('harvest-round-num').textContent=s.round;
+    if(el('nash-hint')) el('nash-hint').style.display=hints?'':'none';
+    this._updateRoundTracker();
+    const sl=document.getElementById('harvest-slider');
+    if(sl) this._updateSliderUI(+sl.value);
+  },
+
+  _updateSliderUI(pct) {
+    const s=this._state,cfg=this._CONFIG,hints=this._hintsEnabled;
+    const el=id=>document.getElementById(id);
+    if(el('harvest-pct'))        el('harvest-pct').textContent=pct+'%';
+    if(el('harvest-fish-count')) el('harvest-fish-count').textContent=`= ${Math.round(s.stock*pct/100)} fish from ${Math.round(s.stock)}`;
+    const hintEl=el('nash-hint');
+    if(hintEl&&hints){
+      const nashPct=s.round===1?(s.beta<cfg.threshold1?50:0):(s.beta<cfg.threshold2?50:0);
+      if(pct===nashPct){ hintEl.textContent=`✓ This matches the Nash equilibrium`; hintEl.className='nash-hint '+(nashPct===50?'take':'wait'); }
+      else if(nashPct===50){ hintEl.textContent='Nash says: Take 50% — β < threshold'; hintEl.className='nash-hint take'; }
+      else{ hintEl.textContent='Nash says: Take 0% — wait for growth'; hintEl.className='nash-hint wait'; }
+    }
+  },
+
+  _updateRoundTracker() {
+    const s=this._state;
+    for(let r=1;r<=3;r++){
+      const row=document.getElementById(`rrow-${r}`); if(!row) continue;
+      const hist=s.history.find(h=>h.round===r);
+      const infoEl=row.querySelector('.round-info'), earnEl=row.querySelector('.round-earn');
+      row.className='round-row'+(r===s.round&&!s.animating?' active':'')+(hist?' done':'');
+      if(hist){if(infoEl)infoEl.textContent=`You:${Math.round(hist.playerTake)} Opp:${Math.round(hist.oppTake)}`;if(earnEl)earnEl.textContent=`+${Math.round(hist.playerTake)}`;}
+    }
+  },
+
+  async _confirmHarvest() {
+    const s=this._state,cfg=this._CONFIG;
+    if(s.animating) return;
+    s.animating=true;
+    const confirmBtn=document.getElementById('commons-confirm');
+    if(confirmBtn) confirmBtn.disabled=true;
+    const sl=document.getElementById('harvest-slider');
+    const playerPct=+(sl?sl.value:0);
+    const oppPct=this._opponentDecide();
+    const playerTake=Math.round(s.stock*playerPct/100);
+    const oppTake=Math.round(s.stock*oppPct/100);
+    const remaining=Math.max(0,s.stock-playerTake-oppTake);
+    const statusEl=document.getElementById('commons-status');
+    if(statusEl) statusEl.textContent='Resolving...';
+    this._removeFish(Math.min(playerTake+oppTake,this._fish.length));
+    await this._delay(400);
+    let newStock=remaining,grew=0;
+    if(s.round<cfg.rounds){
+      newStock=+(remaining*(1+s.beta)).toFixed(1);
+      grew=Math.max(0,newStock-remaining);
+      await this._delay(300);
+      if(statusEl) statusEl.textContent=`Growing +${Math.round(grew)} fish...`;
+      this._spawnFish(Math.round(grew),true);
+      await this._delay(700);
+    }
+    s.history.push({round:s.round,stock:s.stock,playerTake,oppTake,growth:grew,newStock});
+    s.totalHarvested=+(s.totalHarvested+playerTake).toFixed(1);
+    s.stock=newStock;
+    this._addHistItem(s.round,playerTake,oppTake,grew,newStock);
+    const el=id=>document.getElementById(id);
+    if(el('commons-stock')) el('commons-stock').textContent=Math.round(newStock);
+    if(el('commons-total')) el('commons-total').textContent=Math.round(s.totalHarvested);
+    if(el('tank-label'))    el('tank-label').textContent=Math.round(newStock)+' fish';
+    this._updateRoundTracker();
+    if(s.round>=cfg.rounds){ await this._delay(400); await this._showOutcome(); }
+    else{
+      s.round++; s.animating=false;
+      if(sl) sl.value=0;
+      if(statusEl) statusEl.textContent=`Choose your harvest for Round ${s.round}`;
+      if(confirmBtn) confirmBtn.disabled=false;
+      this._updateUI();
+    }
+  },
+
+  // Phase 1 opponent — Ostrom, Gardner & Walker (1994); Keser & Gardner (1999)
+  // Key findings:
+  // 1. Average extraction ≈ Nash at group level, but huge individual variance
+  // 2. Less than 5% play pure Nash (Keser & Gardner 1999)
+  // 3. Higher regeneration rate → more cooperative behavior (Pavitt et al. 2005)
+  // 4. Extraction follows a roughly normal dist centered ~25-35%, bounded [0,50]
+  // 5. "Pulsing" — variance increases over rounds as players experiment
+  _opponentDecide() {
+    const beta=this._state.beta;
+    // Base mean: 30% at low β, drops to ~15% at β=1 (cooperation increases with growth rate)
+    const mean=0.30-0.15*beta;
+    const sd=0.10+0.05*(1-beta); // more variance at low β
+    let sample;
+    do {
+      const u1=Math.random(),u2=Math.random();
+      const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+      sample=mean+sd*z;
+    } while(sample<0||sample>0.50);
+    return Math.round(sample*100);
+  },
+
+  async _showOutcome() {
+    const s=this._state,cfg=this._CONFIG;
+    const actual=s.totalHarvested;
+    let ns=cfg.initialStock;
+    const nt1=ns*s.nashR1; ns=(ns-2*nt1)*(1+s.beta);
+    const nt2=ns*s.nashR2; ns=(ns-2*nt2)*(1+s.beta);
+    const nashTotal=nt1+nt2+ns*0.5;
+    const diff=actual-nashTotal;
+    const diffLabel=Math.abs(diff)<2?'right at':diff>0?`${Math.round(diff)} above`:`${Math.round(Math.abs(diff))} below`;
+    let emoji,title,sub;
+    if(actual>=nashTotal*0.88){emoji='🎣';title='Optimal Harvester';sub=`You collected ${Math.round(actual)} fish — ${diffLabel} Nash optimal (${Math.round(nashTotal)}). With β=${s.beta.toFixed(3)}: Nash prescribes R1=${Math.round(s.nashR1*100)}%, R2=${Math.round(s.nashR2*100)}%, R3=50%.`;}
+    else if(actual>=nashTotal*0.55){emoji='🐠';title='Decent Harvest';sub=`You collected ${Math.round(actual)} fish. Nash optimal was ${Math.round(nashTotal)} with β=${s.beta.toFixed(3)}. The equilibrium: R1=${Math.round(s.nashR1*100)}%, R2=${Math.round(s.nashR2*100)}%, R3=50%.`;}
+    else{emoji='🐡';title='Below Optimal';sub=`${Math.round(actual)} fish vs Nash optimal ${Math.round(nashTotal)}. For β=${s.beta.toFixed(3)}: extract in round ${s.nashR1>0?'1':s.nashR2>0?'2':'3'}. Research shows most players under-extract when growth is high.`;}
+    const theory=`β=${s.beta.toFixed(3)} · Nash: R1=${Math.round(s.nashR1*100)}%/R2=${Math.round(s.nashR2*100)}%/R3=50% · Thresholds: R1 √2−1≈0.414, R2=1.0 · Your: ${Math.round(actual)} · Nash: ${Math.round(nashTotal)}`;
+    const el=id=>document.getElementById(id);
+    el('commons-out-emoji').textContent=emoji; el('commons-out-title').textContent=title;
+    el('commons-out-sub').textContent=sub; el('commons-out-earn').textContent=`+${Math.round(actual)} fish`;
+    el('commons-out-theory').textContent=theory;
+    await this._delay(200); el('commons-outcome').classList.add('show');
+    await this._delay(600); this._shell.flashBalance(actual*0.10);
+    await this._delay(3500); this._shell.onGameComplete();
+  },
+
+  _addHistItem(round,playerTake,oppTake,grew,newStock){
+    const list=document.getElementById('commons-hist'); if(!list)return;
+    const el=document.createElement('div'); el.className='commons-hist-item';
+    el.innerHTML=`<div class="commons-hist-label">Round ${round}</div>You: ${Math.round(playerTake)} · Opp: ${Math.round(oppTake)}<br>${grew>0?`Grew +${Math.round(grew)} → `:''}Stock: ${Math.round(newStock)}`;
+    list.insertBefore(el,list.firstChild);
+  },
+
+  getResults(){
+    const s=this._state,actual=s.totalHarvested;
+    const betaDesc=s.beta<0.414?'Extract early':s.beta<1?'Wait for R2':'Wait for R3';
+    let title,profile,analysis;
+    if(actual>=35){title='The Rational Harvester';profile='Optimal Resource Manager';analysis=`${Math.round(actual)} fish collected with β=${s.beta.toFixed(3)}. ${betaDesc} was the Nash prescription — you applied it well. Most lab subjects under-extract relative to Nash.`;}
+    else if(actual>=20){title='The Conservationist';profile='Patient but Sub-Optimal';analysis=`${Math.round(actual)} fish collected. With β=${s.beta.toFixed(3)}, Nash prescribes R1=${Math.round(s.nashR1*100)}%/R2=${Math.round(s.nashR2*100)}%/R3=50%. Experimental research finds most players harvest ~25–35% per round regardless of β.`;}
+    else{title='Empty Nets';profile='The Over-Trusting Cooperator';analysis=`Only ${Math.round(actual)} fish. Either the opponent extracted aggressively, or you under-harvested. For β=${s.beta.toFixed(3)}, the Nash extract round is ${s.nashR1>0?'1':s.nashR2>0?'2':'3'}.`;}
+    return{title,profile,analysis,balanceDelta:+(actual*0.10).toFixed(2),stats:[
+      {val:Math.round(actual)+' fish',label:'Total Harvested'},
+      {val:'β = '+s.beta.toFixed(3),label:'Growth Rate'},
+      {val:`${Math.round(s.nashR1*100)}%/${Math.round(s.nashR2*100)}%/50%`,label:'Nash R1/R2/R3'},
+    ]};
+  },
+
+  getSubmissionData(){
+    const s=this._state, cfg=this._CONFIG;
+    const r1=s.history.find(h=>h.round===1)||{};
+    const r2=s.history.find(h=>h.round===2)||{};
+    const r3=s.history.find(h=>h.round===3)||{};
+    const phr=(h)=>h.stock>0?+((h.playerTake||0)/h.stock).toFixed(3):0;
+    const ohr=(h)=>h.stock>0?+((h.oppTake||0)/h.stock).toFixed(3):0;
+    const followsNash=(actual,nash)=>nash===0?actual<0.05:actual>0.45;
+    const ph1=phr(r1),ph2=phr(r2),ph3=phr(r3);
+    return {
+      // ── Game configuration (snapshot at time of play) ──────
+      config: {
+        initial_stock:      cfg.initialStock,       // 100 fish
+        total_rounds:       cfg.rounds,             // 3
+        max_harvest_pct:    cfg.maxHarvest,         // 0.50 (50% max per round)
+        beta_distribution:  'uniform[0,1]',         // growth rate distribution
+        threshold_r1:       +cfg.threshold1.toFixed(4),  // √2-1 ≈ 0.4142
+        threshold_r2:       cfg.threshold2,         // 1.0
+      },
+      // ── Random parameters drawn for this game ───────────────
+      drawn_params: {
+        beta:               s.beta,                 // float [0,1] — the growth rate
+        nash_r1:            s.nashR1,               // 0 or 0.5 (Nash prescription R1)
+        nash_r2:            s.nashR2,               // 0 or 0.5 (Nash prescription R2)
+        nash_r3:            0.5,                    // always 0.5 in R3
+      },
+      // ── Payoff structure ────────────────────────────────────
+      payoffs: {
+        payoff_per_fish:    0.10,                   // $0.10 per fish harvested
+        growth_formula:     'remaining × (1 + beta)',
+        max_possible_fish:  cfg.initialStock * Math.pow(1 + s.beta, 3), // theoretical max
+      },
+      // ── Opponent model params ────────────────────────────────
+      opponent_model: {
+        type:               'empirical_normal_phase1',
+        mean_formula:       '0.30 - 0.15×beta',
+        sd_formula:         '0.10 + 0.05×(1-beta)',
+        mean_r1:            +(0.30-0.15*s.beta).toFixed(3),
+        sd_r1:              +(0.10+0.05*(1-s.beta)).toFixed(3),
+        bounds:             [0, 0.50],
+        source:             'Ostrom, Gardner & Walker (1994); Keser & Gardner (1999)',
+      },
+      // ── Per-round player choices (as harvest %) ─────────────
+      player_harvest_r1:    ph1,
+      player_harvest_r2:    ph2,
+      player_harvest_r3:    ph3,
+      opp_harvest_r1:       ohr(r1),
+      opp_harvest_r2:       ohr(r2),
+      opp_harvest_r3:       ohr(r3),
+      player_fish_r1:       Math.round(r1.playerTake||0),
+      player_fish_r2:       Math.round(r2.playerTake||0),
+      player_fish_r3:       Math.round(r3.playerTake||0),
+      stock_r1_start:       Math.round(r1.stock||100),
+      stock_r2_start:       Math.round(r2.stock||0),
+      stock_r3_start:       Math.round(r3.stock||0),
+      followed_nash_r1:     followsNash(ph1,s.nashR1),
+      followed_nash_r2:     followsNash(ph2,s.nashR2),
+      total_fish_harvested: +s.totalHarvested.toFixed(1),
+      total_earnings:       +(s.totalHarvested*0.10).toFixed(2),
+    };
+  },
+
+  destroy(){
+    if(this._animId) cancelAnimationFrame(this._animId);
+    this._fish=[];this._canvas=null;this._ctx=null;this._state=null;this._shell=null;this._animId=null;
+  },
+  _delay(ms){return new Promise(r=>setTimeout(r,ms));},
+};
+
+GameRegistry.register(GameCommons);
+
+</script>
+
+<!-- SHELL CONTROLLER -->
+<script>
+
+const API_SUBMIT      = 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/submitSession';
+const API_LEADERBOARD = 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/getLeaderboard';
+
+const Shell=(()=>{
+  let balance=100,sessionGames=[],gameIndex=0,sessionResults=[],mode='session';
+  let selectedGame=null,hintsEnabled=false,_leaderboardData=null;
+
+  const screens={start:document.getElementById('screen-start'),game:document.getElementById('screen-game'),results:document.getElementById('screen-results'),leaderboard:document.getElementById('screen-leaderboard')};
+  function show(name){Object.entries(screens).forEach(([k,el])=>el.classList.toggle('hidden',k!==name));}
+
+  function flashBalance(delta){
+    balance=+(balance+delta).toFixed(2);
+    const el=document.getElementById('balance-display');
+    el.textContent='$'+balance.toFixed(2);
+    const cls=delta>=0?'gain':'loss';
+    el.classList.add(cls);
+    setTimeout(()=>el.classList.remove(cls),700);
+  }
+  function resetBalance(){balance=100;const el=document.getElementById('balance-display');if(el)el.textContent='$100.00';}
+
+  function populateStartScreen(){
+    const pool=GameRegistry.getAll(),catCls={risky:'risky',theory:'theory',probability:'prob'};
+    const pt=document.getElementById('pool-count-tag'),pl=document.getElementById('pool-games-list');
+    if(pt)pt.textContent=pool.length+' game'+(pool.length!==1?'s':'')+' · plays '+GameRegistry.sessionSize();
+    if(pl)pl.innerHTML=pool.map(g=>'<div class="pool-game-tag '+(catCls[g.category]||'')+'">'+g.name+'</div>').join('');
+    const grid=document.getElementById('game-select-grid');
+    if(grid){
+      grid.innerHTML=pool.map(g=>{const dot=catCls[g.category]||'',sel=selectedGame&&selectedGame.id===g.id;return '<div class="game-select-row'+(sel?' selected':'')+'" data-id="'+g.id+'"><div class="gs-dot '+dot+'"></div><div class="gs-name">'+g.name+'</div><div class="gs-cat">'+g.category+'</div></div>';}).join('');
+      grid.querySelectorAll('.game-select-row').forEach(function(row){row.addEventListener('click',function(){selectedGame=GameRegistry.getById(row.dataset.id);populateStartScreen();});});
+    }
+  }
+
+  function renderDots(){
+    const row=document.getElementById('progress-row'),dots=document.getElementById('prog-dots');
+    if(!row)return;
+    if(mode==='single'){row.style.display='none';return;}
+    row.style.display='';
+    if(dots)dots.innerHTML=sessionGames.map((_,i)=>'<div class="prog-dot'+(i<gameIndex?' done':i===gameIndex?' current':'')+'"></div>').join('');
+  }
+
+  function showIntro(game,tag,onStart){
+    const mount=document.getElementById('game-mount'),overlay=document.createElement('div');
+    overlay.className='game-intro-overlay';
+    const rulesHTML=game.intro.rules.map((r,i)=>'<div class="rule-item"><div class="rule-num">'+String(i+1).padStart(2,'0')+'</div><div>'+r+'</div></div>').join('');
+    overlay.innerHTML='<div class="intro-badge">'+tag+'</div><div class="intro-title">'+game.intro.title+'</div><div class="intro-desc">'+game.intro.desc+'</div><div class="intro-rules">'+rulesHTML+'</div><button class="btn btn-dark" id="intro-start-btn">Start →</button>';
+    mount.appendChild(overlay);
+    document.getElementById('intro-start-btn').addEventListener('click',function(){overlay.remove();onStart();});
+  }
+
+  function updateHintsChip(){const chip=document.getElementById('hints-chip');if(!chip)return;chip.textContent=hintsEnabled?'Hints On':'Hints Off';chip.className='hints-chip'+(hintsEnabled?' on':'');}
+
+  function loadGame(index){
+    const game=sessionGames[index],catLabel={risky:'Risky',theory:'Game Theory',probability:'Probability'};
+    document.getElementById('hdr-game-tag').textContent=mode==='single'?'Single Game':'Game '+(index+1)+' of '+sessionGames.length;
+    document.getElementById('hdr-game-name').textContent=game.shortName;
+    renderDots();
+    document.getElementById('game-mount').innerHTML='';
+    const shellAPI={
+      onGameComplete:function(){
+        const res=game.getResults();
+        flashBalance(res.balanceDelta);
+        sessionResults.push({game:game,balanceDelta:res.balanceDelta,title:res.title,profile:res.profile,analysis:res.analysis,stats:res.stats});
+        // Record for data submission (session mode only)
+        if(mode==='session') DataCollector.recordGame(game,res.balanceDelta);
+        setTimeout(function(){game.destroy();gameIndex++;if(gameIndex<sessionGames.length)loadGame(gameIndex);else showFinalResults();},800);
+      },
+      getBalance:function(){return balance;},
+      flashBalance:flashBalance,
+    };
+    const tag=mode==='single'?game.name:'Game '+(index+1)+' of '+sessionGames.length+' · '+(catLabel[game.category]||game.category);
+    showIntro(game,tag,function(){game.mount(document.getElementById('game-mount'),shellAPI,hintsEnabled);});
+  }
+
+  function showFinalResults(){
+    const totalDelta=sessionResults.reduce(function(s,r){return s+r.balanceDelta;},0);
+    const catCls={risky:'risky',theory:'theory',probability:'prob'};
+    const isSingle=mode==='single';
+    const sumEl=document.getElementById('session-summary'),rowsEl=document.getElementById('session-game-rows');
+    if(isSingle&&sumEl)sumEl.style.display='none';
+    if(!isSingle&&sumEl)sumEl.style.display='';
+    if(!isSingle&&rowsEl)rowsEl.innerHTML=sessionResults.map(function(r){const d=r.balanceDelta,earn=(d>=0?'+':'')+'$'+d.toFixed(2),eCls=d>0?'pos':d<0?'neg':'zero',cCls=catCls[r.game.category]||'';return '<div class="session-game-row"><span class="session-game-name">'+r.game.name+'</span><span class="session-game-cat '+cCls+'">'+r.game.category+'</span><span class="session-game-earn '+eCls+'">'+earn+'</span></div>';}).join('');
+    const lastRes=sessionResults[sessionResults.length-1];
+    const wins=sessionResults.filter(function(r){return r.balanceDelta>0;}).length;
+    const losses=sessionResults.filter(function(r){return r.balanceDelta<0;}).length;
+    document.getElementById('results-badge').textContent=isSingle?'Game Complete':'Session · '+sessionGames.length+' Games';
+    document.getElementById('results-title').textContent=lastRes.title;
+    document.getElementById('results-profile').textContent=lastRes.profile;
+    document.getElementById('analysis-text').textContent=lastRes.analysis;
+    function cell(v,l){return '<div class="res-cell"><div class="res-cell-val">'+v+'</div><div class="res-cell-label">'+l+'</div></div>';}
+    const s1=lastRes.stats&&lastRes.stats[1]?lastRes.stats[1]:{val:'--',label:'Stat'};
+    document.getElementById('results-grid').innerHTML=cell('$'+balance.toFixed(2),'Final Balance')+cell((totalDelta>=0?'+':'')+'$'+totalDelta.toFixed(2),isSingle?'Earned':'Net')+cell(isSingle?s1.val:wins+'W · '+losses+'L',isSingle?s1.label:'Won / Lost');
+    show('results');
+    // After session of 5, go to leaderboard
+    if(!isSingle){setTimeout(function(){show('leaderboard');populateLeaderboard();},2200);}
+  }
+
+  // ── LEADERBOARD ─────────────────────────────────────────────
+  function populateLeaderboard(){
+    const el=document.getElementById('lb-balance-big');
+    if(el)el.textContent='$'+balance.toFixed(2);
+    // Percentile will update after submit
+    document.getElementById('lb-pct-bar').style.width='50%';
+    document.getElementById('lb-percentile').innerHTML='Submit your name to see your rank';
+  }
+
+  async function submitAndLoadLeaderboard(playerName){
+    const statusEl=document.getElementById('lb-submit-status');
+    if(statusEl)statusEl.textContent='Submitting...';
+    const apiUrl=API_SUBMIT||'';
+    const result=await DataCollector.submitSession(playerName,apiUrl);
+    if(result.ok&&!result.dry){
+      const pct=result.percentile||50;
+      const total=result.total_players||1;
+      document.getElementById('lb-percentile').innerHTML='You finished in the <strong>top '+pct+'%</strong> of '+total+' players';
+      document.getElementById('lb-pct-bar').style.width=pct+'%';
+      if(result.leaderboard) renderLeaderboard(result.leaderboard, DataCollector.getSessionId());
+      if(statusEl)statusEl.textContent='Saved! ✓';
+    } else if(result.dry){
+      if(statusEl)statusEl.textContent='(Test mode — not submitted to database)';
+      document.getElementById('lb-percentile').innerHTML='Set API_SUBMIT in build_playtest.js to go live';
+      loadLeaderboardFromAPI();
+    } else {
+      if(statusEl)statusEl.textContent='Error: '+(result.error||'Unknown');
+    }
+  }
+
+  async function loadLeaderboardFromAPI(){
+    if(!API_LEADERBOARD) return;
+    try{
+      const resp=await fetch(API_LEADERBOARD);
+      if(!resp.ok) return;
+      const data=await resp.json();
+      renderLeaderboard(data.leaderboard||[],null);
+    }catch(e){}
+  }
+
+  function renderLeaderboard(rows, mySessionId){
+    const tbody=document.getElementById('lb-rows');
+    if(!tbody) return;
+    tbody.innerHTML=rows.map(function(r,i){
+      const isYou=mySessionId&&r.session_id===mySessionId;
+      const rankCls=i<3?'top':'';
+      const d=r.date?new Date(r.date).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'—';
+      return '<div class="lb-row'+(isYou?' lb-you':'')+'"><div class="lb-rank '+rankCls+'">'+r.rank+'</div><div class="lb-name-cell">'+r.name+(isYou?'<span class="lb-you-tag">you</span>':'')+'</div><div class="lb-bal">$'+r.balance.toFixed(2)+'</div><div class="lb-date">'+d+'</div></div>';
+    }).join('');
+    const countEl=document.getElementById('lb-total-count');
+    if(countEl&&rows.length)countEl.textContent=rows.length+' shown of all sessions';
+  }
+
+  function startSession(){
+    if(mode==='single'){if(!selectedGame){alert('Please select a game.');return;}sessionGames=[selectedGame];}
+    else{sessionGames=GameRegistry.draw(GameRegistry.sessionSize());if(!sessionGames.length)return;}
+    gameIndex=0;sessionResults=[];resetBalance();updateHintsChip();
+    // Start data collection for session mode
+    if(mode==='session') DataCollector.startSession(hintsEnabled);
+    const sumEl=document.getElementById('session-summary');if(sumEl)sumEl.style.display=mode==='single'?'none':'';
+    show('game');loadGame(0);
+  }
+
+  function init(){
+    populateStartScreen();
+    document.querySelectorAll('.mode-tab').forEach(function(tab){tab.addEventListener('click',function(){mode=tab.dataset.mode;document.querySelectorAll('.mode-tab').forEach(function(t){t.classList.remove('active');});tab.classList.add('active');document.getElementById('session-panel').classList.toggle('hidden',mode==='single');document.getElementById('single-panel').classList.toggle('hidden',mode==='session');});});
+    document.getElementById('hints-toggle-wrap').addEventListener('click',function(){hintsEnabled=!hintsEnabled;document.getElementById('hints-toggle').classList.toggle('on',hintsEnabled);});
+    document.getElementById('begin-btn').addEventListener('click',startSession);
+    document.getElementById('exit-btn').addEventListener('click',function(){if(sessionGames[gameIndex]&&sessionGames[gameIndex].destroy)try{sessionGames[gameIndex].destroy();}catch(e){}resetBalance();populateStartScreen();show('start');});
+    document.getElementById('play-again-btn').addEventListener('click',function(){resetBalance();if(mode==='single'){if(!selectedGame){show('start');return;}sessionGames=[selectedGame];}else{sessionGames=GameRegistry.draw(GameRegistry.sessionSize());}gameIndex=0;sessionResults=[];updateHintsChip();if(mode==='session')DataCollector.startSession(hintsEnabled);const sumEl=document.getElementById('session-summary');if(sumEl)sumEl.style.display=mode==='single'?'none':'';show('game');loadGame(0);});
+    document.getElementById('back-btn').addEventListener('click',function(){populateStartScreen();show('start');});
+    document.getElementById('lb-back-btn').addEventListener('click',function(){populateStartScreen();show('start');});
+    document.getElementById('lb-play-again-btn').addEventListener('click',function(){startSession();});
+    // Name submit
+    document.getElementById('lb-submit-btn').addEventListener('click',function(){
+      const first=document.getElementById('lb-first-name').value.trim();
+      const last=document.getElementById('lb-last-name').value.trim();
+      if(!first){document.getElementById('lb-first-name').focus();return;}
+      const name=first+(last?' '+last[0].toUpperCase()+'.':'');
+      document.getElementById('lb-submit-btn').disabled=true;
+      submitAndLoadLeaderboard(name);
+    });
+    // Also load leaderboard when screen first shows (for display before submit)
+    loadLeaderboardFromAPI();
+  }
+  return{init:init};
+})();
+Shell.init();
+
+</script>
+</body>
+</html>

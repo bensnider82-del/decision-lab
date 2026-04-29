@@ -1,0 +1,13 @@
+{
+  "name": "decision-lab-functions",
+  "version": "1.0.0",
+  "description": "Decision Lab Firebase Cloud Functions",
+  "main": "index.js",
+  "engines": {
+    "node": "18"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^5.0.0"
+  }
+}
