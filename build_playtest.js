@@ -23,8 +23,8 @@ const gameFiles = [
 ];
 
 // ── API endpoint — change to your Firebase URL when live ─────
-const API_SUBMIT     = 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/submitSession';
-const API_LEADERBOARD= 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/getLeaderboard';
+const API_SUBMIT     = 'https://us-central1-decision-lab-1ff13.cloudfunctions.net/submitSession';
+const API_LEADERBOARD= 'https://us-central1-decision-lab-1ff13.cloudfunctions.net/getLeaderboard';
 // While testing locally: set to '' to skip actual submission
 
 // ── Parse game files ─────────────────────────────────────────
@@ -327,7 +327,7 @@ const Shell=(()=>{
         flashBalance(res.balanceDelta);
         sessionResults.push({game:game,balanceDelta:res.balanceDelta,title:res.title,profile:res.profile,analysis:res.analysis,stats:res.stats});
         // Record for data submission (session mode only)
-        DataCollector.recordGame(game,res.balanceDelta);
+        if(mode==='session') DataCollector.recordGame(game,res.balanceDelta);
         setTimeout(function(){game.destroy();gameIndex++;if(gameIndex<sessionGames.length)loadGame(gameIndex);else showFinalResults();},800);
       },
       getBalance:function(){return balance;},
@@ -339,9 +339,6 @@ const Shell=(()=>{
 
   function showFinalResults(){
     const totalDelta=sessionResults.reduce(function(s,r){return s+r.balanceDelta;},0);
-    const correctFinalBalance = +(100 + totalDelta).toFixed(2);
-    // Reset shell balance to match correct value
-    balance = correctFinalBalance;
     const catCls={risky:'risky',theory:'theory',probability:'prob'};
     const isSingle=mode==='single';
     const sumEl=document.getElementById('session-summary'),rowsEl=document.getElementById('session-game-rows');
@@ -357,7 +354,7 @@ const Shell=(()=>{
     document.getElementById('analysis-text').textContent=lastRes.analysis;
     function cell(v,l){return '<div class="res-cell"><div class="res-cell-val">'+v+'</div><div class="res-cell-label">'+l+'</div></div>';}
     const s1=lastRes.stats&&lastRes.stats[1]?lastRes.stats[1]:{val:'--',label:'Stat'};
-    document.getElementById('results-grid').innerHTML=cell('$'+correctFinalBalance.toFixed(2),'Final Balance')+cell((totalDelta>=0?'+':'')+'$'+totalDelta.toFixed(2),isSingle?'Earned':'Net')+cell(isSingle?s1.val:wins+'W \xb7 '+losses+'L',isSingle?s1.label:'Won / Lost');
+    document.getElementById('results-grid').innerHTML=cell('$'+balance.toFixed(2),'Final Balance')+cell((totalDelta>=0?'+':'')+'$'+totalDelta.toFixed(2),isSingle?'Earned':'Net')+cell(isSingle?s1.val:wins+'W \xb7 '+losses+'L',isSingle?s1.label:'Won / Lost');
     show('results');
     // Show Submit to Leaderboard button only for full sessions
     const submitLbBtn = document.getElementById('submit-leaderboard-btn');
@@ -369,7 +366,7 @@ const Shell=(()=>{
   // ── LEADERBOARD ─────────────────────────────────────────────
   function populateLeaderboard(){
     const el=document.getElementById('lb-balance-big');
-    if(el)el.textContent='$'+correctFinalBalance.toFixed(2);
+    if(el)el.textContent='$'+balance.toFixed(2);
     // Percentile will update after submit
     document.getElementById('lb-pct-bar').style.width='50%';
     document.getElementById('lb-percentile').innerHTML='Submit your name to see your rank';
@@ -436,7 +433,7 @@ const Shell=(()=>{
     document.getElementById('begin-btn').addEventListener('click',startSession);
     document.getElementById('exit-btn').addEventListener('click',function(){if(sessionGames[gameIndex]&&sessionGames[gameIndex].destroy)try{sessionGames[gameIndex].destroy();}catch(e){}resetBalance();populateStartScreen();show('start');});
     document.getElementById('submit-leaderboard-btn').addEventListener('click',function(){show('leaderboard');populateLeaderboard();});
-    document.getElementById('play-again-btn').addEventListener('click',function(){resetBalance();if(mode==='single'){if(!selectedGame){show('start');return;}sessionGames=[selectedGame];}else{sessionGames=GameRegistry.draw(GameRegistry.sessionSize());}gameIndex=0;sessionResults=[];updateHintsChip();DataCollector.startSession(hintsEnabled);const sumEl=document.getElementById('session-summary');if(sumEl)sumEl.style.display=mode==='single'?'none':'';show('game');loadGame(0);});
+    document.getElementById('play-again-btn').addEventListener('click',function(){resetBalance();if(mode==='single'){if(!selectedGame){show('start');return;}sessionGames=[selectedGame];}else{sessionGames=GameRegistry.draw(GameRegistry.sessionSize());}gameIndex=0;sessionResults=[];updateHintsChip();if(mode==='session')DataCollector.startSession(hintsEnabled);const sumEl=document.getElementById('session-summary');if(sumEl)sumEl.style.display=mode==='single'?'none':'';show('game');loadGame(0);});
     document.getElementById('back-btn').addEventListener('click',function(){populateStartScreen();show('start');});
     document.getElementById('lb-back-btn').addEventListener('click',function(){populateStartScreen();show('start');});
     document.getElementById('lb-results-btn').addEventListener('click',function(){show('results');});
