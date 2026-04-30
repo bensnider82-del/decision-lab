@@ -23,8 +23,8 @@ const gameFiles = [
 ];
 
 // ── API endpoint — change to your Firebase URL when live ─────
-const API_SUBMIT     = 'https://us-central1-decision-lab-1ff13.cloudfunctions.net/submitSession';
-const API_LEADERBOARD= 'https://us-central1-decision-lab-1ff13.cloudfunctions.net/getLeaderboard';
+const API_SUBMIT     = 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/submitSession';
+const API_LEADERBOARD= 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/getLeaderboard';
 // While testing locally: set to '' to skip actual submission
 
 // ── Parse game files ─────────────────────────────────────────
@@ -356,8 +356,11 @@ const Shell=(()=>{
     const s1=lastRes.stats&&lastRes.stats[1]?lastRes.stats[1]:{val:'--',label:'Stat'};
     document.getElementById('results-grid').innerHTML=cell('$'+balance.toFixed(2),'Final Balance')+cell((totalDelta>=0?'+':'')+'$'+totalDelta.toFixed(2),isSingle?'Earned':'Net')+cell(isSingle?s1.val:wins+'W \xb7 '+losses+'L',isSingle?s1.label:'Won / Lost');
     show('results');
-    // After session of 5, go to leaderboard
-    if(!isSingle){setTimeout(function(){show('leaderboard');populateLeaderboard();},2200);}
+    // Show Submit to Leaderboard button only for full sessions
+    const submitLbBtn = document.getElementById('submit-leaderboard-btn');
+    if (submitLbBtn) submitLbBtn.style.display = isSingle ? 'none' : '';
+    // Session mode: stay on results until player clicks "Submit to Leaderboard"
+    // (no auto-advance)
   }
 
   // ── LEADERBOARD ─────────────────────────────────────────────
@@ -429,9 +432,11 @@ const Shell=(()=>{
     document.getElementById('hints-toggle-wrap').addEventListener('click',function(){hintsEnabled=!hintsEnabled;document.getElementById('hints-toggle').classList.toggle('on',hintsEnabled);});
     document.getElementById('begin-btn').addEventListener('click',startSession);
     document.getElementById('exit-btn').addEventListener('click',function(){if(sessionGames[gameIndex]&&sessionGames[gameIndex].destroy)try{sessionGames[gameIndex].destroy();}catch(e){}resetBalance();populateStartScreen();show('start');});
+    document.getElementById('submit-leaderboard-btn').addEventListener('click',function(){show('leaderboard');populateLeaderboard();});
     document.getElementById('play-again-btn').addEventListener('click',function(){resetBalance();if(mode==='single'){if(!selectedGame){show('start');return;}sessionGames=[selectedGame];}else{sessionGames=GameRegistry.draw(GameRegistry.sessionSize());}gameIndex=0;sessionResults=[];updateHintsChip();if(mode==='session')DataCollector.startSession(hintsEnabled);const sumEl=document.getElementById('session-summary');if(sumEl)sumEl.style.display=mode==='single'?'none':'';show('game');loadGame(0);});
     document.getElementById('back-btn').addEventListener('click',function(){populateStartScreen();show('start');});
     document.getElementById('lb-back-btn').addEventListener('click',function(){populateStartScreen();show('start');});
+    document.getElementById('lb-results-btn').addEventListener('click',function(){show('results');});
     document.getElementById('lb-play-again-btn').addEventListener('click',function(){startSession();});
     // Name submit
     document.getElementById('lb-submit-btn').addEventListener('click',function(){
@@ -526,6 +531,7 @@ const html = `<!DOCTYPE html>
     <div class="results-grid" id="results-grid"></div>
     <div class="result-analysis"><div class="analysis-title">Insight</div><div class="analysis-text" id="analysis-text">&#x2014;</div></div>
     <div class="results-actions">
+      <button class="btn btn-dark" id="submit-leaderboard-btn" style="display:none;">Submit to Leaderboard &#x2192;</button>
       <button class="btn btn-dark" id="play-again-btn">Play Again &#x2192;</button>
       <button class="btn-ghost" id="back-btn">&#x2190; Menu</button>
     </div>
@@ -560,6 +566,7 @@ const html = `<!DOCTYPE html>
 
     <div class="results-actions">
       <button class="btn btn-dark" id="lb-play-again-btn">Play Again &#x2192;</button>
+      <button class="btn-ghost" id="lb-results-btn">&#x2190; Back to Results</button>
       <button class="btn-ghost" id="lb-back-btn">&#x2190; Menu</button>
     </div>
   </div>
