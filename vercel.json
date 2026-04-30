@@ -1,0 +1,1 @@
+{"rewrites": [{"source": "/(.*)", "destination": "/decision_lab_playtest.html"}]}
