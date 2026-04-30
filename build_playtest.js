@@ -23,8 +23,8 @@ const gameFiles = [
 ];
 
 // ── API endpoint — change to your Firebase URL when live ─────
-const API_SUBMIT     = 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/submitSession';
-const API_LEADERBOARD= 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/getLeaderboard';
+const API_SUBMIT     = 'https://us-central1-decision-lab-1ff13.cloudfunctions.net/submitSession';
+const API_LEADERBOARD= 'https://us-central1-decision-lab-1ff13.cloudfunctions.net/getLeaderboard';
 // While testing locally: set to '' to skip actual submission
 
 // ── Parse game files ─────────────────────────────────────────
