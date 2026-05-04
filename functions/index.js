@@ -1,29 +1,9 @@
-/* ============================================================
-   DECISION LAB — FIREBASE CLOUD FUNCTION
-   File: functions/index.js
-
-   SETUP:
-   npm install -g firebase-tools
-   firebase init functions   (choose JavaScript, Firestore)
-   firebase deploy --only functions
-
-   This function receives ONE POST per session containing
-   all 5 game results, validates everything, and writes to
-   two Firestore collections:
-     - sessions          (one document per session)
-     - game_results      (five documents per session)
-
-   FIRESTORE STRUCTURE:
-   /sessions/{session_id}
-   /game_results/{result_id}   (result_id = session_id + "_" + game_type)
-============================================================ */
-
 const functions  = require('firebase-functions');
 const admin      = require('firebase-admin');
 admin.initializeApp();
 const db = admin.firestore();
 
-const VALID_GAMES = ['centipede', 'bart', 'duel', 'dutch_auction', 'dutch-auction', 'commons'];
+const VALID_GAMES    = ['centipede', 'bart', 'duel', 'dutch_auction', 'commons'];
 const REQUIRED_GAMES = 5;
 const MAX_BALANCE    = 500;
 const MIN_BALANCE    = 0;
@@ -129,13 +109,15 @@ exports.submitSession = functions.https.onRequest(async (req, res) => {
       name:       doc.data().player_name,
       balance:    doc.data().server_final_balance,
       session_id: doc.id,
+      date:       doc.data().timestamp?.toDate()?.toISOString() || doc.data().timestamp_client || null,
     }));
 
     const allScores  = await db.collection('sessions').orderBy('server_final_balance', 'desc').get();
     const totalSessions = allScores.size;
     const rank       = allScores.docs.findIndex(d => d.id === session.session_id) + 1;
+    // percentile = % of players this session beat (rank 1 of 6 beats 83%, rank 6 of 6 beats 0%)
     const percentile = totalSessions > 1
-      ? Math.round((1 - (rank - 1) / (totalSessions - 1)) * 100)
+      ? Math.round(((totalSessions - rank) / totalSessions) * 100)
       : 100;
 
     return res.status(200).json({
@@ -167,7 +149,7 @@ exports.getLeaderboard = functions.https.onRequest(async (req, res) => {
       rank:    i + 1,
       name:    doc.data().player_name,
       balance: doc.data().server_final_balance,
-      date:    doc.data().timestamp?.toDate()?.toISOString() || null,
+      date:    doc.data().timestamp?.toDate()?.toISOString() || doc.data().timestamp_client || null,
     }));
 
     const total = (await db.collection('sessions').count().get()).data().count;
