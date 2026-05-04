@@ -360,12 +360,12 @@ const GameDuel = {
           <canvas id="duel-bullet-canvas"></canvas>
 
           <!-- Cowboy SVG arena -->
-          <svg id="duel-arena-svg" viewBox="0 0 600 380" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+          <svg id="duel-arena-svg" viewBox="0 0 3000 1900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
             <!-- Ground -->
-            <rect x="0" y="340" width="600" height="40" fill="#C8B48A"/>
-            <rect x="0" y="338" width="600" height="4" fill="#B8A478"/>
-            <line x1="30" y1="350" x2="160" y2="350" stroke="#B0A070" stroke-width="1" opacity="0.5"/>
-            <line x1="440" y1="350" x2="570" y2="350" stroke="#B0A070" stroke-width="1" opacity="0.5"/>
+            <rect x="0" y="1700" width="3000" height="200" fill="#C8B48A"/>
+            <rect x="0" y="1690" width="3000" height="20" fill="#B8A478"/>
+            <line x1="150" y1="1750" x2="800" y2="1750" stroke="#B0A070" stroke-width="5" opacity="0.5"/>
+            <line x1="2200" y1="1750" x2="2850" y2="1750" stroke="#B0A070" stroke-width="5" opacity="0.5"/>
 
             <!-- Hero cowboy (left, faces right) -->
             <g id="duel-hero-g">
@@ -378,8 +378,8 @@ const GameDuel = {
             </g>
 
             <!-- Name labels inside SVG -->
-            <text id="duel-svg-you"  x="0"   y="380" font-family="DM Mono,monospace" font-size="11" fill="#7A7268" letter-spacing="0.08em">YOU</text>
-            <text id="duel-svg-opp"  x="600" y="380" font-family="DM Mono,monospace" font-size="11" fill="#7A7268" letter-spacing="0.08em" text-anchor="end">OPPONENT</text>
+            <text id="duel-svg-you"  x="0"   y="1890" font-family="DM Mono,monospace" font-size="55" fill="#7A7268" letter-spacing="0.08em">YOU</text>
+            <text id="duel-svg-opp"  x="3000" y="1890" font-family="DM Mono,monospace" font-size="55" fill="#7A7268" letter-spacing="0.08em" text-anchor="end">OPPONENT</text>
           </svg>
         </div>
 
@@ -550,9 +550,9 @@ const GameDuel = {
     }
 
     // Cowboy positions — start far apart, step 30px closer each wait round
-    const baseHeroX    = 100;
-    const baseVillainX = 500;
-    const step         = s.stepsTaken * 28;
+    const baseHeroX    = 500;
+    const baseVillainX = 2500;
+    const step         = s.stepsTaken * 140;
     const heroX        = baseHeroX    + step;
     const villainX     = baseVillainX - step;
 

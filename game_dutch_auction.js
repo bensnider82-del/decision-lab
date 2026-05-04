@@ -69,7 +69,7 @@ const GameDutchAuction = {
     valueMax:      100,
     clockMin:      0,
     clockMax:      100,
-    clockSpeed:    50,      // ms per tick (clock drops 1 unit per tick)
+    clockSpeed:    100,     // ms per tick (clock drops 1 unit per tick) — doubled for readability
     rounds:        5,       // rounds per session
     // CRRA baseline (CSW 1988)
     riskAversion:  { min: 0.30, max: 0.70 },
@@ -367,7 +367,17 @@ const GameDutchAuction = {
           <div class="dutch-bid-note" id="dutch-bid-note">Start the round to begin</div>
         </div>
 
-        <!-- Profit preview -->
+        <!-- Clock speed slider -->
+        <div style="margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:5px;">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">Clock Speed</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Slower</span>
+            <input type="range" id="dutch-speed-slider" min="25" max="200" step="25" value="100"
+              style="width:140px;accent-color:var(--gold);cursor:pointer;"/>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Faster</span>
+          </div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);" id="dutch-speed-label">Normal</div>
+        </div>
         <div class="dutch-profit-preview">
           <div class="dutch-pp-card">
             <div class="dutch-pp-label">Your Value</div>
@@ -443,6 +453,23 @@ const GameDutchAuction = {
   _bindEvents() {
     document.getElementById('dutch-bid-btn')
       .addEventListener('click', () => this._playerBid());
+
+    // Clock speed slider
+    const slider = document.getElementById('dutch-speed-slider');
+    const label  = document.getElementById('dutch-speed-label');
+    const speedLabels = { 25: 'Very Fast', 50: 'Fast', 75: 'Fast', 100: 'Normal', 125: 'Slow', 150: 'Slow', 175: 'Very Slow', 200: 'Very Slow' };
+    if (slider) {
+      slider.addEventListener('input', () => {
+        const ms = parseInt(slider.value);
+        this._CONFIG.clockSpeed = ms;
+        if (label) label.textContent = speedLabels[ms] || 'Normal';
+        // If clock is running, restart it at new speed
+        if (this._state && this._state.running) {
+          clearInterval(this._clockInterval);
+          this._runClock();
+        }
+      });
+    }
   },
 
   // ── Start a round ───────────────────────────────────────────
@@ -549,7 +576,7 @@ const GameDutchAuction = {
     s.roundOver = true;
 
     const bid    = s.clockPrice;
-    const profit = Math.max(0, s.value - bid);
+    const profit = s.value - bid;  // can be negative if player overbids
     // Player wins (they stopped clock first — no opponent had bid yet at this or higher price)
     // Check if opponent's bid is >= player's bid (opponent would have stopped before this)
     const beatByOpponent = s.opponentBids.find(o => o.bid >= bid);
@@ -583,14 +610,11 @@ const GameDutchAuction = {
     s.history.push({ round: s.round, won: true, value: s.value, bid, profit });
     s.totalEarnings = +(s.totalEarnings + profit).toFixed(2);
 
-    document.getElementById('dutch-out-emoji').textContent = profit > 0 ? '🏆' : '😬';
-    document.getElementById('dutch-out-title').textContent = profit > 0 ? 'You won!' : 'You won — at a loss';
-    document.getElementById('dutch-out-sub').textContent =
-      `You stopped the clock at ${bid} with a value of ${s.value}. ` +
-      `Profit: $${profit.toFixed(2)}. Your bid was ${deviationLabel} equilibrium.`;
-    document.getElementById('dutch-out-earn').textContent = `+$${profit.toFixed(2)}`;
-    document.getElementById('dutch-out-earn').className =
-      `dutch-out-earn ${profit > 0 ? 'win' : 'lose'}`;
+    document.getElementById('dutch-out-emoji').textContent = profit > 0 ? '🏆' : profit === 0 ? '😐' : '💸';
+    document.getElementById('dutch-out-title').textContent = profit > 0 ? 'You won!' : profit === 0 ? 'You broke even' : 'You overbid — loss!';
+    document.getElementById('dutch-out-sub').textContent = `You stopped the clock at ${bid} with a value of ${s.value}. ` +`Result: $${profit.toFixed(2)} (value - bid). Your bid was ${deviationLabel} equilibrium.` +(profit < 0 ? ' You overbid your value — negative profit!' : '');
+    document.getElementById('dutch-out-earn').textContent = (profit >= 0 ? '+' : '') + '$' + profit.toFixed(2);
+    document.getElementById('dutch-out-earn').className = 'dutch-out-earn ' + (profit > 0 ? 'win' : 'lose');
     document.getElementById('dutch-out-theory').textContent =
       `Nash bid (risk-neutral, N=3): ${nashBid}  ·  ` +
       `CRRA bid (r=0.5, empirical): ${crraBid}  ·  Your bid: ${bid}`;
