@@ -23,8 +23,8 @@ const gameFiles = [
 ];
 
 // ── API endpoint — change to your Firebase URL when live ─────
-const API_SUBMIT     = 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/submitSession';
-const API_LEADERBOARD= 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/getLeaderboard';
+const API_SUBMIT     = 'https://us-central1-decision-lab-1ff13.cloudfunctions.net/submitSession';
+const API_LEADERBOARD= 'https://us-central1-decision-lab-1ff13.cloudfunctions.net/getLeaderboard';
 // While testing locally: set to '' to skip actual submission
 
 // ── Parse game files ─────────────────────────────────────────
@@ -427,7 +427,7 @@ const Shell=(()=>{
     else{sessionGames=GameRegistry.draw(GameRegistry.sessionSize());if(!sessionGames.length)return;}
     gameIndex=0;sessionResults=[];resetBalance();updateHintsChip();
     // Start data collection for session mode
-    if(mode==='session') DataCollector.startSession(hintsEnabled);
+    DataCollector.startSession(hintsEnabled);
     const sumEl=document.getElementById('session-summary');if(sumEl)sumEl.style.display=mode==='single'?'none':'';
     show('game');loadGame(0);
   }
