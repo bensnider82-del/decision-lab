@@ -2021,12 +2021,12 @@ const GameDuel = {
     const heroG    = document.getElementById('duel-hero-g');
     const villainG = document.getElementById('duel-villain-g');
     if (heroG) {
-      heroG.setAttribute('transform', `translate(${heroX}, 0)`);
+      heroG.setAttribute('transform', `translate(${heroX}, 1338)`);
       heroG.innerHTML = this._cowboySVG('hero', heroPose);
     }
     if (villainG) {
       // Villain faces LEFT — mirror with scale(-1,1) then translate
-      villainG.setAttribute('transform', `translate(${villainX}, 0) scale(-1,1)`);
+      villainG.setAttribute('transform', `translate(${villainX}, 1338) scale(-1,1)`);
       villainG.innerHTML = this._cowboySVG('villain', villainPose);
     }
   },
@@ -2198,8 +2198,8 @@ const GameDuel = {
     const oppHit    = oppAction    === 'shoot' && Math.random() < s.hitProb;
 
     // Show shoot poses
-    const heroX    = 100 + s.stepsTaken * 28;
-    const villainX = 500 - s.stepsTaken * 28;
+    const heroX    = 500 + s.stepsTaken * 140;
+    const villainX = 2500 - s.stepsTaken * 140;
     if (playerAction === 'shoot') this._updateCowboyPositions(heroX, villainX, 'shoot', s.oppDefeated ? 'defeated' : oppAction === 'shoot' ? 'shoot' : 'idle');
     if (oppAction    === 'shoot') this._updateCowboyPositions(heroX, villainX, playerAction === 'shoot' ? 'shoot' : 'idle', 'shoot');
 
@@ -2765,10 +2765,10 @@ const GameDutchAuction = {
         <div style="margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:5px;">
           <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">Clock Speed</div>
           <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Slower</span>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Faster</span>
             <input type="range" id="dutch-speed-slider" min="25" max="200" step="25" value="100"
               style="width:140px;accent-color:var(--gold);cursor:pointer;"/>
-            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Faster</span>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Slower</span>
           </div>
           <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);" id="dutch-speed-label">Normal</div>
         </div>

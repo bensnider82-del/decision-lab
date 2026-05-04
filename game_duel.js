@@ -523,12 +523,12 @@ const GameDuel = {
     const heroG    = document.getElementById('duel-hero-g');
     const villainG = document.getElementById('duel-villain-g');
     if (heroG) {
-      heroG.setAttribute('transform', `translate(${heroX}, 0)`);
+      heroG.setAttribute('transform', `translate(${heroX}, 1338)`);
       heroG.innerHTML = this._cowboySVG('hero', heroPose);
     }
     if (villainG) {
       // Villain faces LEFT — mirror with scale(-1,1) then translate
-      villainG.setAttribute('transform', `translate(${villainX}, 0) scale(-1,1)`);
+      villainG.setAttribute('transform', `translate(${villainX}, 1338) scale(-1,1)`);
       villainG.innerHTML = this._cowboySVG('villain', villainPose);
     }
   },
@@ -700,8 +700,8 @@ const GameDuel = {
     const oppHit    = oppAction    === 'shoot' && Math.random() < s.hitProb;
 
     // Show shoot poses
-    const heroX    = 100 + s.stepsTaken * 28;
-    const villainX = 500 - s.stepsTaken * 28;
+    const heroX    = 500 + s.stepsTaken * 140;
+    const villainX = 2500 - s.stepsTaken * 140;
     if (playerAction === 'shoot') this._updateCowboyPositions(heroX, villainX, 'shoot', s.oppDefeated ? 'defeated' : oppAction === 'shoot' ? 'shoot' : 'idle');
     if (oppAction    === 'shoot') this._updateCowboyPositions(heroX, villainX, playerAction === 'shoot' ? 'shoot' : 'idle', 'shoot');
 

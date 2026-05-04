@@ -371,10 +371,10 @@ const GameDutchAuction = {
         <div style="margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:5px;">
           <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">Clock Speed</div>
           <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Slower</span>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Faster</span>
             <input type="range" id="dutch-speed-slider" min="25" max="200" step="25" value="100"
               style="width:140px;accent-color:var(--gold);cursor:pointer;"/>
-            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Faster</span>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">Slower</span>
           </div>
           <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);" id="dutch-speed-label">Normal</div>
         </div>
