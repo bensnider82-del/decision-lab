@@ -21,6 +21,7 @@ const gameFiles = [
   'game_dutch_auction.js',
   'game_commons.js',
   'game_beauty_contest.js',
+  'game_high_card.js',
 ];
 
 // ── API endpoint — change to your Firebase URL when live ─────

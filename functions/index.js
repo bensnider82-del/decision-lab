@@ -3,7 +3,7 @@ const admin      = require('firebase-admin');
 admin.initializeApp();
 const db = admin.firestore();
 
-const VALID_GAMES    = ['centipede', 'bart', 'duel', 'dutch_auction', 'dutch-auction', 'commons', 'beauty_contest'];
+const VALID_GAMES    = ['centipede', 'bart', 'duel', 'dutch_auction', 'dutch-auction', 'commons', 'beauty_contest', 'high_card'];
 const REQUIRED_GAMES = 5;
 const MAX_BALANCE    = 500;
 const MIN_BALANCE    = 0;
