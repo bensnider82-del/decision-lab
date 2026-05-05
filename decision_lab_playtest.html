@@ -6,10 +6,45 @@
 <title>Decision Lab</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+
+/* ── DEV OVERLAY — fixed over everything ── */
+#dev-lock-btn{position:fixed;bottom:14px;left:14px;z-index:99000;width:30px;height:30px;border-radius:50%;background:rgba(26,22,18,.15);border:1px solid rgba(26,22,18,.12);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;padding:0;}
+#dev-lock-btn:hover{background:rgba(26,22,18,.3);}
+#dev-modal-bg{position:fixed;inset:0;z-index:99100;background:rgba(26,22,18,.55);display:none;align-items:center;justify-content:center;}
+#dev-modal-bg.open{display:flex;}
+#dev-modal{background:var(--surface);border:1px solid var(--border);border-radius:6px;width:520px;max-height:80vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.22);}
+.dev-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.dev-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);}
+.dev-close{background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted);padding:0 2px;line-height:1;}
+.dev-body{padding:14px 18px;}
+.dev-section{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.dev-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.dev-section-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.dev-stat-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;}
+.dev-stat-label{color:var(--muted);}
+.dev-stat-val{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--ink);}
+.dev-game-grid{display:flex;flex-direction:column;gap:4px;}
+.dev-game-row{display:grid;grid-template-columns:120px 50px 1fr 90px;gap:8px;align-items:center;padding:5px 8px;border-radius:3px;background:var(--cream);}
+.dev-game-name{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink);}
+.dev-phase-badge{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:2px;text-align:center;}
+.dev-phase-badge.p1{background:rgba(192,57,43,.12);color:var(--red);}
+.dev-phase-badge.p2{background:rgba(200,168,75,.12);color:var(--gold);}
+.dev-phase-badge.p3{background:rgba(46,125,82,.12);color:var(--green);}
+.dev-progress-wrap{height:5px;background:var(--border-solid);border-radius:3px;overflow:hidden;}
+.dev-progress-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+.dev-progress-fill.p1{background:var(--red);}
+.dev-progress-fill.p2{background:var(--gold);}
+.dev-progress-fill.p3{background:var(--green);}
+.dev-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:right;}
+.dev-pw-wrap{display:flex;gap:8px;}
+.dev-pw-input{flex:1;padding:8px 10px;border:1px solid var(--border-solid);border-radius:3px;font-size:13px;background:var(--cream);color:var(--ink);outline:none;font-family:'DM Mono',monospace;}
+.dev-pw-input:focus{border-color:var(--gold);}
+.dev-refresh-btn{font-family:'DM Mono',monospace;font-size:10px;padding:5px 10px;border-radius:3px;border:1px solid var(--border-solid);background:none;cursor:pointer;color:var(--muted);}
+.dev-refresh-btn:hover{border-color:var(--gold);color:var(--gold);}
 :root{--cream:#F5F0E8;--ink:#1A1612;--gold:#C8A84B;--red:#C0392B;--green:#2E7D52;--muted:#7A7268;--surface:#FDFBF7;--border:rgba(26,22,18,0.12);--border-solid:#E0DDD8;}
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--ink);overflow:hidden;}
-#app{width:100%;height:100vh;position:relative;display:flex;align-items:center;justify-content:center;}
+html,body{width:100%;height:100%;background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--ink);overflow:auto;}
+#app{width:100%;height:100vh;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity .55s ease,transform .55s ease;}
 .screen.hidden{opacity:0;pointer-events:none;transform:translateY(16px);}
 .bg-grid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(26,22,18,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(26,22,18,.04) 1px,transparent 1px);background-size:40px 40px;}
@@ -273,6 +308,33 @@ html,body{width:100%;height:100%;background:var(--cream);font-family:'DM Sans',s
   </div>
 </div>
 
+<!-- DEV OVERLAY -->
+<button id="dev-lock-btn" title="Developer panel">&#x1F512;</button>
+
+<div id="dev-modal-bg">
+  <div id="dev-modal">
+    <div id="dev-pw-screen" style="padding:24px 20px;">
+      <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Developer Access</div>
+      <div class="dev-pw-wrap">
+        <input type="password" class="dev-pw-input" id="dev-pw-input" placeholder="Enter password" />
+        <button class="dev-refresh-btn" id="dev-pw-submit" style="border-color:var(--gold);color:var(--gold);">Enter</button>
+      </div>
+      <div id="dev-pw-err" style="font-size:11px;color:var(--red);margin-top:6px;min-height:16px;"></div>
+    </div>
+    <div id="dev-stats-screen" style="display:none;">
+      <div class="dev-header">
+        <div class="dev-title">&#x1F512; Developer Panel</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="dev-refresh-btn" id="dev-refresh">&#x21BB; Refresh</button>
+          <button class="dev-close" id="dev-close">&#x2715;</button>
+        </div>
+      </div>
+      <div class="dev-body" id="dev-body">
+        <div class="dev-loading">Loading stats...</div>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
 
 <!-- GAME REGISTRY -->
@@ -332,17 +394,17 @@ const DataCollector=(()=>{
 <script>
 
 const PhaseSystem=(()=>{
-  const PHASE_URL=''; // set to API_LEADERBOARD base when live
   const _cache={};
   return {
-    async getOpponentData(gameType){
-      if(_cache[gameType]) return _cache[gameType];
-      if(!PHASE_URL) return null; // Phase 1: use academic baseline
+    async getOpponentData(gameType, playerId){
+      const key=gameType+'_'+(playerId||'');
+      if(_cache[key]) return _cache[key];
       try{
-        const resp=await fetch(PHASE_URL+'/opponent?game='+gameType);
+        const url=API_OPP_DATA+'?game='+gameType+(playerId?'&player_id='+encodeURIComponent(playerId):'');
+        const resp=await fetch(url);
         if(!resp.ok) return null;
         const data=await resp.json();
-        _cache[gameType]=data;
+        _cache[key]=data;
         return data;
       }catch(e){return null;}
     }
@@ -5129,6 +5191,101 @@ const Shell=(()=>{
   return{init:init};
 })();
 Shell.init();
+
+
+// ── DEV OVERLAY ─────────────────────────────────────────────
+(function(){
+  const lockBtn   = document.getElementById('dev-lock-btn');
+  const modalBg   = document.getElementById('dev-modal-bg');
+  const pwInput   = document.getElementById('dev-pw-input');
+  const pwSubmit  = document.getElementById('dev-pw-submit');
+  const pwErr     = document.getElementById('dev-pw-err');
+  const pwScreen  = document.getElementById('dev-pw-screen');
+  const statsScr  = document.getElementById('dev-stats-screen');
+  const closeBtn  = document.getElementById('dev-close');
+  const refreshBtn= document.getElementById('dev-refresh');
+
+  lockBtn.addEventListener('click', function(){
+    modalBg.classList.add('open');
+    pwInput.focus();
+  });
+  modalBg.addEventListener('click', function(e){ if(e.target===modalBg) modalBg.classList.remove('open'); });
+  closeBtn.addEventListener('click', function(){ modalBg.classList.remove('open'); });
+
+  function tryPassword(){
+    if(pwInput.value === DEV_PASSWORD){
+      pwScreen.style.display='none';
+      statsScr.style.display='block';
+      loadDevStats();
+    } else {
+      pwErr.textContent='Incorrect password.';
+      pwInput.value='';
+      pwInput.focus();
+    }
+  }
+  pwSubmit.addEventListener('click', tryPassword);
+  pwInput.addEventListener('keydown', function(e){ if(e.key==='Enter') tryPassword(); });
+  refreshBtn.addEventListener('click', loadDevStats);
+
+  const GAME_NAMES = {
+    centipede:'Centipede', bart:'BART', duel:'Duel',
+    dutch_auction:'Dutch Auction', commons:'Commons',
+    beauty_contest:'Beauty Contest', high_card:'High Card',
+  };
+
+  async function loadDevStats(){
+    const body = document.getElementById('dev-body');
+    body.innerHTML = '<div class="dev-loading">Loading...</div>';
+    try {
+      const resp = await fetch(API_DEV_STATS);
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      const d = await resp.json();
+      renderDevStats(d, body);
+    } catch(e) {
+      body.innerHTML = '<div class="dev-loading" style="color:var(--red);">Error loading stats: '+e.message+'</div>';
+    }
+  }
+
+  function renderDevStats(d, body){
+    var p2=d.phase2_threshold, p3=d.phase3_threshold;
+    var games=Object.entries(d.game_stats||{}).filter(function(e){return e[0]!=='dutch-auction';});
+    var h='';
+    h+='<div class="dev-section"><div class="dev-section-title">Session Overview</div>';
+    h+='<div class="dev-stat-row"><span class="dev-stat-label">Total sessions</span><span class="dev-stat-val">'+d.total_sessions+'</span></div>';
+    h+='<div class="dev-stat-row"><span class="dev-stat-label">Real player sessions</span><span class="dev-stat-val" style="color:var(--green);">'+d.real_sessions+'</span></div>';
+    h+='<div class="dev-stat-row"><span class="dev-stat-label">Test sessions excluded</span><span class="dev-stat-val" style="color:var(--red);">'+d.test_sessions+'</span></div>';
+    h+='<div class="dev-stat-row"><span class="dev-stat-label">Unique real players</span><span class="dev-stat-val">'+d.unique_players+'</span></div></div>';
+    h+='<div class="dev-section"><div class="dev-section-title">Phase Thresholds</div>';
+    h+='<div class="dev-stat-row"><span class="dev-stat-label">Phase 1 to Phase 2</span><span class="dev-stat-val">'+p2+' sessions per game</span></div>';
+    h+='<div class="dev-stat-row"><span class="dev-stat-label">Phase 2 to Phase 3</span><span class="dev-stat-val">'+p3+' sessions per game</span></div>';
+    h+='<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:4px;">Phase 1: 100% academic baseline &nbsp; Phase 2: blended 0-95% real &nbsp; Phase 3: 95% real</div></div>';
+    h+='<div class="dev-section"><div class="dev-section-title">Per-Game Data Status</div>';
+    h+='<div style="display:grid;grid-template-columns:120px 50px 1fr 80px;gap:6px;margin-bottom:8px;padding:0 8px;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-family:monospace;"><span>Game</span><span>Phase</span><span>Progress</span><span style="text-align:right;">Sessions</span></div>';
+    h+='<div class="dev-game-grid">';
+    games.forEach(function(entry){
+      var key=entry[0], g=entry[1];
+      var names={'centipede':'Centipede','bart':'BART','duel':'Duel','dutch_auction':'Dutch Auction','commons':'Commons','beauty_contest':'Beauty Contest','high_card':'High Card'};
+      var name=names[key]||key;
+      var pc='p'+g.phase;
+      var pct=g.phase===1?Math.min(100,Math.round(g.count/p2*100)):g.phase===2?Math.min(100,Math.round((g.count-p2)/(p3-p2)*100)):100;
+      var needed=g.phase===1?(p2-g.count)+' needed':g.phase===2?(p3-g.count)+' needed':'Complete';
+      h+='<div class="dev-game-row">';
+      h+='<span class="dev-game-name">'+name+'</span>';
+      h+='<span class="dev-phase-badge '+pc+'">Ph.'+g.phase+'</span>';
+      h+='<div class="dev-progress-wrap"><div class="dev-progress-fill '+pc+'" style="width:'+pct+'%"></div></div>';
+      h+='<span class="dev-count">'+g.count+' ('+needed+')</span>';
+      h+='</div>';
+    });
+    h+='</div></div>';
+    h+='<div class="dev-section"><div class="dev-section-title">Filters Active</div>';
+    h+='<div class="dev-stat-row"><span class="dev-stat-label">Test user filter</span><span class="dev-stat-val" style="color:var(--green);">On — test names excluded</span></div>';
+    h+='<div class="dev-stat-row"><span class="dev-stat-label">Self-play filter</span><span class="dev-stat-val" style="color:var(--green);">On — player never plays own data</span></div>';
+    h+='<div class="dev-stat-row"><span class="dev-stat-label">Last updated</span><span class="dev-stat-val">'+new Date(d.generated_at).toLocaleTimeString()+'</span></div>';
+    h+='</div>';
+    body.innerHTML=h;
+  }
+})();
+
 
 </script>
 </body>
