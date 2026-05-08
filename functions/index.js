@@ -72,12 +72,16 @@ exports.submitSession = functions.https.onRequest(async (req, res) => {
     const serverTime = admin.firestore.FieldValue.serverTimestamp();
 
     // Session document
+    // Flag test sessions — never included in opponent data
+    const isTest = /test/i.test(session.player_name);
+
     const sessionDoc = db.collection('sessions').doc(session.session_id);
     batch.set(sessionDoc, {
       ...session,
       timestamp:            serverTime,
       player_id:            playerId,
       server_final_balance: computedFinal,
+      is_test:              isTest,
     });
 
     // Five game_result documents
@@ -178,6 +182,20 @@ function validateSession(s) {
   for (const g of s.game_order) {
     if (!VALID_GAMES.includes(g))                      return `Unknown game type: ${g}`;
   }
+  // Demographics optional — validate shape if present
+  if (s.demographics !== null && s.demographics !== undefined) {
+    const d = s.demographics;
+    if (typeof d !== 'object')                         return 'demographics must be an object';
+    if (d.age !== null && d.age !== undefined) {
+      if (typeof d.age !== 'number' || d.age < 10 || d.age > 100) return 'demographics.age out of range';
+    }
+    const validGenders   = ['male','female','nonbinary','other',null,undefined,''];
+    const validWork      = ['employed','student','game_theory_student','unemployed','other',null,undefined,''];
+    const validEducation = ['high_school','some_college','bachelors','masters','phd','other',null,undefined,''];
+    if (!validGenders.includes(d.gender))      return 'demographics.gender invalid';
+    if (!validWork.includes(d.work))           return 'demographics.work invalid';
+    if (!validEducation.includes(d.education)) return 'demographics.education invalid';
+  }
   return null;
 }
 
@@ -194,3 +212,121 @@ function validateGameResult(gr, sessionId) {
   if (typeof gr.game_params !== 'object')              return 'game_params must be an object';
   return null;
 }
+
+
+/* ============================================================
+   OPPONENT DATA ENDPOINT
+   GET /getOpponentData?game=centipede&player_id=xxx
+   Returns phase info + real player distributions
+   Excludes: test users, the requesting player themselves
+============================================================ */
+exports.getOpponentData = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
+  if (req.method !== 'GET') { res.status(405).json({ error: 'Method not allowed' }); return; }
+
+  const gameType = req.query.game;
+  const playerId = req.query.player_id || null;
+
+  if (!VALID_GAMES.includes(gameType)) {
+    return res.status(400).json({ error: 'Unknown game type' });
+  }
+
+  try {
+    // Count real (non-test) sessions for this game type
+    const allQuery = await db.collection('game_results')
+      .where('game_type', '==', gameType)
+      .get();
+
+    // Filter: exclude test users and the player themselves
+    const realDocs = allQuery.docs.filter(d => {
+      if (d.data().is_test)   return false;   // tagged as test
+      if (playerId && d.data().player_id === playerId) return false; // own data
+      return true;
+    });
+
+    const realCount = realDocs.length;
+
+    // Phase thresholds
+    const PHASE2_THRESHOLD = 50;
+    const PHASE3_THRESHOLD = 500;
+    let phase, blendWeight;
+    if (realCount < PHASE2_THRESHOLD) {
+      phase = 1; blendWeight = 0;
+    } else if (realCount < PHASE3_THRESHOLD) {
+      phase = 2;
+      blendWeight = (realCount - PHASE2_THRESHOLD) / (PHASE3_THRESHOLD - PHASE2_THRESHOLD);
+    } else {
+      phase = 3; blendWeight = 0.95;
+    }
+
+    // Extract game_params from real sessions (sample up to 100)
+    const sample = realDocs.slice(-100).map(d => d.data().game_params || {});
+
+    return res.status(200).json({
+      game_type:        gameType,
+      phase,
+      blend_weight:     +blendWeight.toFixed(3),
+      real_count:       realCount,
+      phase2_threshold: PHASE2_THRESHOLD,
+      phase3_threshold: PHASE3_THRESHOLD,
+      next_threshold:   phase === 1 ? PHASE2_THRESHOLD : phase === 2 ? PHASE3_THRESHOLD : null,
+      needed_for_next:  phase === 1 ? PHASE2_THRESHOLD - realCount : phase === 2 ? PHASE3_THRESHOLD - realCount : 0,
+      sample,
+    });
+  } catch (err) {
+    console.error('[OpponentData] Error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/* ============================================================
+   DEV STATS ENDPOINT
+   GET /getDevStats
+   Returns aggregate stats across all games for the dev panel
+============================================================ */
+exports.getDevStats = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
+  if (req.method !== 'GET') { res.status(405).json({ error: 'Method not allowed' }); return; }
+
+  const PHASE2_THRESHOLD = 50;
+  const PHASE3_THRESHOLD = 500;
+
+  try {
+    // Total sessions
+    const allSessions = await db.collection('sessions').get();
+    const realSessions = allSessions.docs.filter(d => !d.data().is_test);
+    const testSessions = allSessions.docs.filter(d => d.data().is_test);
+
+    // Per-game breakdown
+    const gameTypes = ['centipede','bart','duel','dutch_auction','dutch-auction','commons','beauty_contest','high_card'];
+    const gameStats = {};
+
+    const allResults = await db.collection('game_results').get();
+    for (const gt of gameTypes) {
+      const real = allResults.docs.filter(d => d.data().game_type === gt && !d.data().is_test);
+      const count = real.length;
+      let phase = 1, blendWeight = 0;
+      if (count >= PHASE3_THRESHOLD)      { phase = 3; blendWeight = 0.95; }
+      else if (count >= PHASE2_THRESHOLD) { phase = 2; blendWeight = +(count - PHASE2_THRESHOLD)/(PHASE3_THRESHOLD - PHASE2_THRESHOLD); }
+      gameStats[gt] = { count, phase, blend_weight: +blendWeight.toFixed(3), needed_for_phase2: Math.max(0, PHASE2_THRESHOLD - count) };
+    }
+
+    return res.status(200).json({
+      total_sessions:      allSessions.size,
+      real_sessions:       realSessions.length,
+      test_sessions:       testSessions.length,
+      unique_players:      [...new Set(realSessions.map(d => d.data().player_id))].length,
+      phase2_threshold:    PHASE2_THRESHOLD,
+      phase3_threshold:    PHASE3_THRESHOLD,
+      game_stats:          gameStats,
+      generated_at:        new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('[DevStats] Error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});

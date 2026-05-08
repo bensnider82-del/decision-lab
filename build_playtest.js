@@ -61,10 +61,10 @@ const DataCollector=(()=>{
       if(typeof game.getSubmissionData==='function') try{params=game.getSubmissionData();}catch(e){console.warn('getSubmissionData failed',game.id,e);}
       _results.push({result_id:_sid+'_'+game.id,session_id:_sid,game_type:game.id,game_index:idx,balance_at_start:start,winnings:r2(winnings),balance_at_end:end,game_params:params});
     },
-    async submitSession(playerName,apiUrl){
+    async submitSession(playerName,apiUrl,demographics){
       if(!_results.length) return{ok:false,error:'No games'};
       const payload={
-        session:{session_id:_sid,player_name:playerName.trim(),hints_enabled:_hints,games_played:_results.length,starting_balance:_bal,final_balance:_running,game_order:_order,timestamp_client:new Date().toISOString(),timezone_offset:new Date().getTimezoneOffset(),game_version:'1.0.0'},
+        session:{session_id:_sid,player_name:playerName.trim(),hints_enabled:_hints,games_played:_results.length,starting_balance:_bal,final_balance:_running,game_order:_order,timestamp_client:new Date().toISOString(),timezone_offset:new Date().getTimezoneOffset(),game_version:'1.0.0',demographics:demographics||null},
         game_results:_results
       };
       if(!apiUrl){console.log('[DataCollector] Dry-run payload:',JSON.stringify(payload,null,2));return{ok:true,dry:true,final_balance:_running};}
@@ -418,11 +418,11 @@ const Shell=(()=>{
     document.getElementById('lb-percentile').innerHTML='Submit your name to see your rank';
   }
 
-  async function submitAndLoadLeaderboard(playerName){
+  async function submitAndLoadLeaderboard(playerName,demographics){
     const statusEl=document.getElementById('lb-submit-status');
     if(statusEl)statusEl.textContent='Submitting...';
     const apiUrl=API_SUBMIT||'';
-    const result=await DataCollector.submitSession(playerName,apiUrl);
+    const result=await DataCollector.submitSession(playerName,apiUrl,demographics);
     if(result.ok&&!result.dry){
       const pct=result.percentile||50;
       const total=result.total_players||1;
@@ -505,8 +505,18 @@ const Shell=(()=>{
       const last=document.getElementById('lb-last-name').value.trim();
       if(!first){document.getElementById('lb-first-name').focus();return;}
       const name=first+(last?' '+last[0].toUpperCase()+'.':'');
+      // Collect optional demographics
+      const age=document.getElementById('demo-age').value;
+      const demographics={
+        age:       age?parseInt(age):null,
+        gender:    document.getElementById('demo-gender').value||null,
+        work:      document.getElementById('demo-work').value||null,
+        education: document.getElementById('demo-edu').value||null,
+      };
+      // Only include if at least one field filled
+      const hasDemos=Object.values(demographics).some(function(v){return v!==null;});
       document.getElementById('lb-submit-btn').disabled=true;
-      submitAndLoadLeaderboard(name);
+      submitAndLoadLeaderboard(name, hasDemos?demographics:null);
     });
     // Also load leaderboard when screen first shows (for display before submit)
     loadLeaderboardFromAPI();
@@ -715,6 +725,50 @@ const html = `<!DOCTYPE html>
       <div class="lb-submit-status" id="lb-submit-status"></div>
     </div>
 
+
+    <div class="demo-section">
+      <div class="demo-title">About You</div>
+      <div class="demo-optional">Optional — all fields are anonymous and used for research only.</div>
+      <div class="demo-grid">
+        <div class="demo-field">
+          <label class="demo-label">Age</label>
+          <input type="number" class="demo-input" id="demo-age" placeholder="e.g. 24" min="10" max="100"/>
+        </div>
+        <div class="demo-field">
+          <label class="demo-label">Gender</label>
+          <select class="demo-select" id="demo-gender">
+            <option value="">Prefer not to say</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="nonbinary">Non-binary</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="demo-field">
+          <label class="demo-label">Work Status</label>
+          <select class="demo-select" id="demo-work">
+            <option value="">Prefer not to say</option>
+            <option value="employed">Employed</option>
+            <option value="student">Student</option>
+            <option value="game_theory_student">Game Theory Student</option>
+            <option value="unemployed">Unemployed</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="demo-field">
+          <label class="demo-label">Education</label>
+          <select class="demo-select" id="demo-edu">
+            <option value="">Prefer not to say</option>
+            <option value="high_school">High School</option>
+            <option value="some_college">Some College</option>
+            <option value="bachelors">Bachelor's Degree</option>
+            <option value="masters">Master's Degree</option>
+            <option value="phd">PhD or Doctoral</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
     <div class="lb-table-wrap">
       <div class="lb-table-header"><span>#</span><span>Player</span><span style="text-align:right">Balance</span><span style="text-align:right">Date</span></div>
       <div class="lb-rows-scroll"><div id="lb-rows"><div style="padding:16px;text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);">Loading leaderboard...</div></div></div>
